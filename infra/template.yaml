@@ -1,0 +1,141 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  FireLedger API: FIRMS NRT proxy, weather proxy, CSV export and the scheduled
+  refresh. The Amplify app (static site) is created in the console and rewrites
+  /api/* to the Function URLs in the Outputs.
+
+Parameters:
+  FirmsKeyParameter:
+    Type: String
+    Default: /fireledger/FIRMS_MAP_KEY
+    Description: Name of the SSM SecureString parameter holding the FIRMS MAP_KEY.
+  SesSender:
+    Type: String
+    Default: ""
+    Description: Verified SES sender for watch-zone alerts (leave empty to log alerts only).
+
+Conditions:
+  HasSes: !Not [!Equals [!Ref SesSender, ""]]
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures: [arm64]
+    CodeUri: ../api/
+    Timeout: 60
+    MemorySize: 256
+    Environment:
+      Variables:
+        CACHE_BUCKET: !Ref CacheBucket
+        FIRMS_KEY_PARAMETER: !Ref FirmsKeyParameter
+
+Resources:
+  CacheBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub fireledger-cache-${AWS::AccountId}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+      LifecycleConfiguration:
+        Rules:
+          - { Id: expire-nrt, Status: Enabled, Prefix: nrt/, ExpirationInDays: 1 }
+          - { Id: expire-weather, Status: Enabled, Prefix: weather/, ExpirationInDays: 1 }
+
+  NrtFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: nrt.app.handler
+      FunctionUrlConfig: { AuthType: NONE }
+      LoggingConfig: { LogGroup: !Ref NrtLogs }
+      Policies:
+        - S3CrudPolicy: { BucketName: !Ref CacheBucket }
+        - Statement:
+            - Effect: Allow
+              Action: ssm:GetParameter
+              Resource: !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${FirmsKeyParameter}
+
+  WeatherFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: weather.app.handler
+      Timeout: 30
+      FunctionUrlConfig: { AuthType: NONE }
+      LoggingConfig: { LogGroup: !Ref WeatherLogs }
+      Policies:
+        - S3CrudPolicy: { BucketName: !Ref CacheBucket }
+
+  ExportFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: export.app.handler
+      Timeout: 120
+      FunctionUrlConfig: { AuthType: NONE }
+      LoggingConfig: { LogGroup: !Ref ExportLogs }
+      Policies:
+        - S3CrudPolicy: { BucketName: !Ref CacheBucket }
+        - Statement:
+            - Effect: Allow
+              Action: ssm:GetParameter
+              Resource: !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${FirmsKeyParameter}
+
+  RefreshFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: refresh.app.handler
+      Timeout: 180
+      LoggingConfig: { LogGroup: !Ref RefreshLogs }
+      Environment:
+        Variables:
+          SES_SENDER: !Ref SesSender
+      Policies:
+        - S3CrudPolicy: { BucketName: !Ref CacheBucket }
+        - Statement:
+            - Effect: Allow
+              Action: ssm:GetParameter
+              Resource: !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${FirmsKeyParameter}
+        - !If
+          - HasSes
+          - Statement:
+              - Effect: Allow
+                Action: ses:SendEmail
+                Resource: "*"
+          - !Ref AWS::NoValue
+      Events:
+        Every3Hours:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: rate(3 hours)
+            Description: Refresh the live hotspot cache and check watch zones
+
+  NrtLogs:
+    Type: AWS::Logs::LogGroup
+    Properties: { RetentionInDays: 7 }
+  WeatherLogs:
+    Type: AWS::Logs::LogGroup
+    Properties: { RetentionInDays: 7 }
+  ExportLogs:
+    Type: AWS::Logs::LogGroup
+    Properties: { RetentionInDays: 7 }
+  RefreshLogs:
+    Type: AWS::Logs::LogGroup
+    Properties: { RetentionInDays: 7 }
+
+Outputs:
+  NrtFunctionUrl:
+    Description: "Amplify rewrite target for /api/nrt<*>"
+    Value: !GetAtt NrtFunctionUrl.FunctionUrl
+  WeatherFunctionUrl:
+    Description: "Amplify rewrite target for /api/weather<*>"
+    Value: !GetAtt WeatherFunctionUrl.FunctionUrl
+  ExportFunctionUrl:
+    Description: "Amplify rewrite target for /api/export<*>"
+    Value: !GetAtt ExportFunctionUrl.FunctionUrl
+  CacheBucketName:
+    Value: !Ref CacheBucket

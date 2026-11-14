@@ -1,0 +1,228 @@
+{
+ "code": "MAR",
+ "name": "Morocco",
+ "bbox": [
+  -17.0,
+  21.25,
+  -1.25,
+  36.0
+ ],
+ "years": [
+  2001,
+  2002,
+  2003,
+  2004,
+  2005,
+  2006,
+  2007,
+  2008,
+  2009,
+  2010,
+  2011,
+  2012,
+  2013,
+  2014,
+  2015,
+  2016,
+  2017,
+  2018,
+  2019,
+  2020,
+  2021,
+  2022,
+  2023,
+  2024,
+  2025
+ ],
+ "data_start": "2000-12-10",
+ "data_end": "2025-12-31",
+ "baseline": [
+  2003,
+  2022
+ ],
+ "coverage": [
+  {
+   "ym": 200106,
+   "status": "partial",
+   "note": "MODIS Terra instrument outage 2001-06-15 to 2001-07-03"
+  },
+  {
+   "ym": 200107,
+   "status": "partial",
+   "note": "MODIS Terra instrument outage 2001-06-15 to 2001-07-03"
+  },
+  {
+   "ym": 201602,
+   "status": "partial",
+   "note": "MODIS Terra safe mode 2016-02-18 to 2016-02-27"
+  },
+  {
+   "ym": 202008,
+   "status": "partial",
+   "note": "MODIS Aqua formatter anomaly 2020-08-16 to 2020-09-02"
+  },
+  {
+   "ym": 202009,
+   "status": "partial",
+   "note": "MODIS Aqua formatter anomaly 2020-08-16 to 2020-09-02"
+  }
+ ],
+ "harmonization": {
+  "target_unit": "VIIRS-equivalent fire-cell-days (0.01 degree cells, single-satellite reference)",
+  "viirs_observed_from": "2012-02",
+  "viirs_reference": {
+   "switch_year": 2019,
+   "k_n20_to_snpp": 0.8965833758286589,
+   "overlap_years": [
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+   ],
+   "k_terra_only_to_terra_aqua": 1.9774011299435028,
+   "terra_only_before": "2002-07"
+  },
+  "overlap_years": [
+   2012,
+   2013,
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024,
+   2025
+  ],
+  "calibration_units": {
+   "r5": 277,
+   "r1": 208,
+   "dom": 61
+  },
+  "band": "1.645 sigma of leave-one-year-out log residuals (about 90 %)",
+  "validation": {
+   "model": "seasonal",
+   "candidates": {
+    "ratio": {
+     "unit_month": {
+      "n": 3507,
+      "r2": -1.7129584520801138,
+      "mae": 4.78387259792014,
+      "bias_pct": 4.111964009887947,
+      "spearman": 0.5107039132231619
+     },
+     "domain_month": {
+      "n": 167,
+      "r2": -1.5789654135642963,
+      "mae": 46.27661105574961,
+      "bias_pct": 4.111964009887947,
+      "spearman": 0.7949873166785849
+     },
+     "calendar_rank_spearman_mean": 0.7131074446672574
+    },
+    "loglog": {
+     "unit_month": {
+      "n": 3507,
+      "r2": 0.5499423694341115,
+      "mae": 3.075604628792435,
+      "bias_pct": -46.64230806241936,
+      "spearman": 0.5316161216255798
+     },
+     "domain_month": {
+      "n": 167,
+      "r2": -0.04723963499121697,
+      "mae": 46.77587935855671,
+      "bias_pct": -46.64230806241936,
+      "spearman": 0.8389880845536505
+     },
+     "calendar_rank_spearman_mean": 0.7701140676397211
+    },
+    "seasonal": {
+     "unit_month": {
+      "n": 3507,
+      "r2": 0.7289959503959056,
+      "mae": 2.3862393144174585,
+      "bias_pct": 0.6649928474668722,
+      "spearman": 0.7430586259605911
+     },
+     "domain_month": {
+      "n": 167,
+      "r2": 0.6560783812725248,
+      "mae": 23.551277453869208,
+      "bias_pct": 0.6649928474668722,
+      "spearman": 0.7728252457335177
+     },
+     "calendar_rank_spearman_mean": 0.7558388145364716
+    }
+   },
+   "unit_month": {
+    "n": 3507,
+    "r2": 0.7289959503959056,
+    "mae": 2.3862393144174585,
+    "bias_pct": 0.6649928474668722,
+    "spearman": 0.7430586259605911
+   },
+   "domain_month": {
+    "n": 167,
+    "r2": 0.6560783812725248,
+    "mae": 23.551277453869208,
+    "bias_pct": 0.6649928474668722,
+    "spearman": 0.7728252457335177
+   },
+   "domain_month_raw_modis": {
+    "n": 167,
+    "r2": -1.3434165244916456,
+    "mae": 75.92215568862275,
+    "bias_pct": -76.01318944844124,
+    "spearman": 0.8386691571168694
+   },
+   "calendar_rank_spearman_mean": 0.7558388145364716,
+   "calendar_rank_spearman_min": 0.37894970114415205
+  }
+ },
+ "filters": {
+  "modis_min_confidence": 30,
+  "viirs_confidence": [
+   "n",
+   "h"
+  ],
+  "vegetation_types": [
+   0
+  ]
+ },
+ "hotspot_rows": {
+  "2001": 100,
+  "2002": 84,
+  "2003": 458,
+  "2004": 565,
+  "2005": 471,
+  "2006": 524,
+  "2007": 219,
+  "2008": 104,
+  "2009": 275,
+  "2010": 237,
+  "2011": 366,
+  "2012": 3091,
+  "2013": 2590,
+  "2014": 2264,
+  "2015": 2366,
+  "2016": 2441,
+  "2017": 2554,
+  "2018": 4111,
+  "2019": 5583,
+  "2020": 4989,
+  "2021": 5454,
+  "2022": 7419,
+  "2023": 5829,
+  "2024": 3736,
+  "2025": 4078
+ },
+ "generated_utc": "2026-11-14T21:32:36+00:00"
+}

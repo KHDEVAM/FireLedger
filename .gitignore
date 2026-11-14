@@ -1,0 +1,34 @@
+# secrets
+.env
+.env.*
+!.env.example
+.aws/
+samconfig.toml
+
+# data that is re-created by the pipeline
+data/raw/
+data/interim/
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# node
+node_modules/
+web/dist/
+web/public/SOURCES.md
+
+# AWS SAM build output
+.aws-sam/
+
+# design sources (large; kept by the team outside the repository)
+design/
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

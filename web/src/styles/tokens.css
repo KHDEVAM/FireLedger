@@ -1,0 +1,90 @@
+/* FireLedger brand tokens. The only place where colors are written as hex. */
+:root {
+  /* brand palette (sampled from the logo) */
+  --fl-flame-yellow: #fdb300;
+  --fl-fire-orange: #fd8500;
+  --fl-blaze: #fd4c01;
+  --fl-ember-red: #f61200;
+  --fl-deep-red: #c60006;
+  --fl-ledger-navy: #00112c;
+  --fl-night-navy: #000a22;
+  --fl-satellite-blue: #003586;
+  --fl-signal-blue: #006bc6;
+  --fl-orbit-blue: #3586c7;
+  --fl-slate: #3d5575;
+  --fl-paper: #ffffff;
+  --fl-paper-2: #f7f8fa;
+  --fl-signature: linear-gradient(90deg, #fd8500, #f61200 60%, #00112c);
+
+  /* sequential "fire ramp" for counts (lightness falls steadily) */
+  --fl-ramp-0: #eef1f5;
+  --fl-ramp-1: #fde7a6;
+  --fl-ramp-2: #fdb300;
+  --fl-ramp-3: #fd8500;
+  --fl-ramp-4: #fd4c01;
+  --fl-ramp-5: #f61200;
+  --fl-ramp-6: #c60006;
+  --fl-ramp-7: #5a0a12;
+
+  /* diverging anomaly ramp: blue (below) to fire (above), never red-green */
+  --fl-div-1: #003586;
+  --fl-div-2: #3586c7;
+  --fl-div-3: #bbd5ec;
+  --fl-div-4: #f2f2f2;
+  --fl-div-5: #fdc98a;
+  --fl-div-6: #fd8500;
+  --fl-div-7: #c60006;
+
+  /* live hotspot age */
+  --fl-age-1: #f61200;
+  --fl-age-2: #fd8500;
+  --fl-age-3: #fdb300;
+  --fl-age-4: #3d5575;
+
+  /* semantic tokens, light theme (default) */
+  --bg: var(--fl-paper-2);
+  --surface: var(--fl-paper);
+  --text: var(--fl-ledger-navy);
+  --text-muted: #44566f;
+  --border: #d5dbe4;
+  --accent: var(--fl-fire-orange);
+  --accent-hover: var(--fl-blaze);
+  --on-accent: var(--fl-ledger-navy);
+  --link: var(--fl-satellite-blue);
+  --info: var(--fl-signal-blue);
+  --info-bg: #e6f0fa;
+  --danger: var(--fl-deep-red);
+  --danger-bg: #fdeaea;
+  --warn-bg: #fff3dc;
+  --focus: var(--fl-signal-blue);
+  --grid: #d5dbe4;
+  --hatch: var(--fl-slate);
+  --outline-now: var(--fl-ledger-navy);
+  --cell-text-dark: var(--fl-ledger-navy);
+  --cell-text-light: #ffffff;
+  --shadow: 0 1px 2px rgba(0, 17, 44, 0.08), 0 4px 12px rgba(0, 17, 44, 0.06);
+
+  --font-head: "Montserrat", "Cairo", system-ui, sans-serif;
+  --font-body: "Inter", "Cairo", system-ui, sans-serif;
+  --radius: 10px;
+}
+
+:root[data-theme="dark"] {
+  --fl-ramp-0: #3d5575;
+  --bg: var(--fl-night-navy);
+  --surface: #0a1a3a;
+  --text: #ffffff;
+  --text-muted: #b9c6d8;
+  --border: #2a3d5c;
+  --link: #8fc0ee;
+  --info: #8fc0ee;
+  --info-bg: #0d2a52;
+  --danger: #ff9a94;
+  --danger-bg: #3a1014;
+  --warn-bg: #3a2a08;
+  --focus: var(--fl-flame-yellow);
+  --grid: var(--fl-slate);
+  --hatch: #8fa3bf;
+  --outline-now: #ffffff;
+  --shadow: none;
+}

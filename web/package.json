@@ -1,0 +1,29 @@
+{
+  "name": "fireledger-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/copy-sources.mjs",
+    "dev": "vite",
+    "prebuild": "node scripts/copy-sources.mjs",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource/cairo": "^5.0.0",
+    "@fontsource/inter": "^5.0.0",
+    "@fontsource/montserrat": "^5.0.0",
+    "d3": "^7.9.0",
+    "jspdf": "^2.5.1",
+    "maplibre-gl": "^4.7.1"
+  },
+  "devDependencies": {
+    "@types/d3": "^7.4.3",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.0",
+    "vitest": "^2.0.5"
+  }
+}

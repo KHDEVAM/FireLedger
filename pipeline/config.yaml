@@ -1,0 +1,58 @@
+# FireLedger pipeline configuration. Every threshold used by the pipeline lives here.
+
+region:
+  code: MAR
+  name: Morocco            # name used in the FIRMS yearly country file names
+  bbox: [-17.3, 20.6, -0.8, 36.1]   # W, S, E, N (used for the recent-tail API calls)
+
+years:
+  start: 2001              # first calendar year shown (MODIS Terra starts Nov 2000)
+  download_from: 2000
+  download_to: 2026
+
+sources:
+  country_base: "https://firms.modaps.eosdis.nasa.gov/data/country"
+  api_base: "https://firms.modaps.eosdis.nasa.gov/api"
+  # directory name in the FIRMS country archive -> (family, satellite code)
+  archive_sensors:
+    modis: {family: MODIS, sat: null}          # satellite column says Terra / Aqua
+    viirs-snpp: {family: VIIRS, sat: N}
+    viirs-jpss1: {family: VIIRS, sat: N20}
+  # area-API sources used only for the recent tail (needs FIRMS_MAP_KEY)
+  tail_sources:
+    MODIS_SP: {family: MODIS, sat: null, proc: SP}
+    MODIS_NRT: {family: MODIS, sat: null, proc: NRT}
+    VIIRS_SNPP_SP: {family: VIIRS, sat: N, proc: SP}      # history only, ended 2 Nov 2026
+    VIIRS_NOAA20_SP: {family: VIIRS, sat: N20, proc: SP}
+    VIIRS_NOAA20_NRT: {family: VIIRS, sat: N20, proc: NRT}
+    VIIRS_NOAA21_NRT: {family: VIIRS, sat: N21, proc: NRT}
+
+filters:
+  modis_min_confidence: 30         # keep nominal + high
+  viirs_confidence: [n, h]         # drop low
+  vegetation_types: [0]            # FIRMS `type`: 0 vegetation, 1 volcano, 2 static land, 3 offshore
+
+grid:
+  fine_per_degree: 100             # 0.01 degree fire-cell-days
+  display_factor: 25               # 25 fine cells -> 0.25 degree display cell
+  calib_factor_1deg: 4             # 4 display cells -> 1 degree calibration region
+  calib_factor_5deg: 20            # 20 display cells -> 5 degree fallback region
+
+harmonize:
+  viirs_observed_from: "2012-02"   # S-NPP starts 20 Jan 2012, so Jan 2012 is still backcast
+  aqua_from: "2002-07"             # MODIS Aqua fire data start; earlier months are Terra-only
+  snpp_end: "2026-11-02"           # NOAA ended Suomi NPP data delivery
+  min_months_with_fire: 24         # calibration region eligibility
+  min_modis_cell_days: 50
+  band_z: 1.645                    # 90 % band on the log residuals
+
+baseline:
+  start: 2003
+  end: 2022
+
+# Known sensor outages. Months listed here are flagged "partial" in the calendar.
+# Replace/extend with the FIRMS missing_data API output when a MAP_KEY is available.
+known_gaps:
+  - {from: "2001-06-15", to: "2001-07-03", sensor: "MODIS Terra", note: "instrument outage"}
+  - {from: "2016-02-18", to: "2016-02-27", sensor: "MODIS Terra", note: "safe mode"}
+  - {from: "2020-08-16", to: "2020-09-02", sensor: "MODIS Aqua", note: "formatter anomaly"}

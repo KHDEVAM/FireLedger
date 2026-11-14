@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en" dir="ltr" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FireLedger — Two decades of fire, one consistent record</title>
+    <meta name="description" content="FireLedger harmonizes NASA FIRMS MODIS and VIIRS active-fire hotspots into one consistent record and shows it as an interactive burning activity calendar for any area." />
+    <meta name="theme-color" content="#000A22" />
+    <link rel="canonical" href="https://fireledger.earth/" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/brand/favicon-16.png" />
+    <link rel="apple-touch-icon" href="/brand/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="FireLedger" />
+    <meta property="og:title" content="FireLedger — Two decades of fire, one consistent record" />
+    <meta property="og:description" content="A harmonized MODIS + VIIRS burning activity calendar for any area, built on NASA FIRMS." />
+    <meta property="og:url" content="https://fireledger.earth/" />
+    <meta property="og:image" content="https://fireledger.earth/brand/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="FireLedger">
+        <img class="brand-full brand-light" src="/brand/logo-header.png" alt="FireLedger" height="40" />
+        <img class="brand-full brand-dark" src="/brand/logo-header-dark.png" alt="FireLedger" height="40" />
+        <img class="brand-icon" src="/brand/icon-64.png" alt="" width="32" height="32" />
+        <span class="brand-text">FireLedger</span>
+      </a>
+      <p class="tagline" data-i18n="tagline">Two decades of fire, one consistent record.</p>
+      <nav class="header-tools" aria-label="Settings">
+        <a href="#methods" class="btn btn-quiet" data-i18n="nav.methods">Methods</a>
+        <label class="visually-hidden" for="lang" data-i18n="lang.label">Language</label>
+        <select id="lang" class="select">
+          <option value="en">English</option>
+          <option value="fr">Français</option>
+          <option value="ar">العربية</option>
+        </select>
+        <button id="theme" class="btn btn-quiet" type="button" aria-pressed="false" data-i18n="theme.dark">Dark</button>
+      </nav>
+    </header>
+    <div class="signature" aria-hidden="true"></div>
+
+    <main id="main" class="layout">
+      <!-- ───────────── left column: area + map ───────────── -->
+      <section class="col-map" aria-labelledby="h-area">
+        <div class="card">
+          <h2 id="h-area" data-i18n="area.title">1 · Choose an area</h2>
+          <div class="field-row">
+            <div class="field grow">
+              <label for="place" data-i18n="area.search">Search a place</label>
+              <form id="place-form" class="inline">
+                <input id="place" class="input" type="search" autocomplete="off" placeholder="Chefchaouen" />
+                <button class="btn" type="submit" data-i18n="area.go">Search</button>
+              </form>
+              <ul id="place-results" class="results" role="listbox" aria-label="Search results"></ul>
+            </div>
+            <div class="field">
+              <label for="admin" data-i18n="area.region">Country / region</label>
+              <select id="admin" class="select"></select>
+            </div>
+          </div>
+          <div class="toolbar" role="group" aria-label="Draw tools">
+            <button id="draw-rect" class="btn" type="button" data-i18n="area.rect">Draw rectangle</button>
+            <button id="draw-poly" class="btn" type="button" data-i18n="area.poly">Draw polygon</button>
+            <button id="draw-clear" class="btn btn-quiet" type="button" data-i18n="area.reset">Whole region</button>
+          </div>
+          <details class="coords">
+            <summary data-i18n="area.coords">Enter coordinates</summary>
+            <form id="circle-form" class="field-row">
+              <div class="field"><label for="c-lat" data-i18n="area.lat">Latitude</label><input id="c-lat" class="input num" inputmode="decimal" placeholder="35.17" /></div>
+              <div class="field"><label for="c-lon" data-i18n="area.lon">Longitude</label><input id="c-lon" class="input num" inputmode="decimal" placeholder="-5.27" /></div>
+              <div class="field"><label for="c-km" data-i18n="area.radius">Radius (km)</label><input id="c-km" class="input num" inputmode="decimal" value="25" /></div>
+              <button class="btn" type="submit" data-i18n="area.apply">Apply</button>
+            </form>
+            <form id="bbox-form" class="field-row">
+              <div class="field grow"><label for="bbox" data-i18n="area.bbox">Bounding box W,S,E,N</label><input id="bbox" class="input num" placeholder="-6.0,34.8,-4.5,35.6" /></div>
+              <button class="btn" type="submit" data-i18n="area.apply">Apply</button>
+            </form>
+          </details>
+          <p id="draw-hint" class="hint" role="status" aria-live="polite"></p>
+          <p id="aoi-summary" class="hint"></p>
+        </div>
+
+        <div class="card">
+          <h2 data-i18n="range.title">2 · Date range</h2>
+          <div class="field-row">
+            <div class="field"><label for="from" data-i18n="range.from">From</label><input id="from" class="input" type="month" /></div>
+            <div class="field"><label for="to" data-i18n="range.to">To</label><input id="to" class="input" type="month" /></div>
+            <button id="range-all" class="btn btn-quiet" type="button" data-i18n="range.all">Full record</button>
+          </div>
+        </div>
+
+        <div class="card map-card">
+          <div id="map" role="application" aria-label="Map"></div>
+          <div class="map-controls">
+            <fieldset class="seg">
+              <legend data-i18n="map.layers">Map layers</legend>
+              <label><input type="checkbox" id="layer-density" checked /> <span data-i18n="map.density">Harmonized density</span></label>
+              <label><input type="checkbox" id="layer-nrt" checked /> <span data-i18n="map.nrt">Live hotspots</span></label>
+              <label><input type="checkbox" id="layer-gibs" /> <span data-i18n="map.gibs">NASA true-color imagery</span></label>
+            </fieldset>
+            <div class="timelapse">
+              <button id="tl-play" class="btn" type="button" aria-pressed="false" data-i18n="map.play">Play time-lapse</button>
+              <label class="visually-hidden" for="tl-slider" data-i18n="map.month">Month</label>
+              <input id="tl-slider" type="range" min="0" max="0" value="0" disabled />
+              <output id="tl-label" for="tl-slider"></output>
+            </div>
+            <div id="map-legend" class="legend"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────────── right column: analytics ───────────── -->
+      <section class="col-data">
+        <div id="loading" class="banner info" role="status" aria-live="polite"></div>
+
+        <div class="card" aria-labelledby="h-now">
+          <h2 id="h-now" data-i18n="now.title">This month vs history</h2>
+          <div class="now">
+            <div class="now-main">
+              <p id="now-month" class="eyebrow"></p>
+              <p id="now-value" class="bignum">–</p>
+              <p id="now-unit" class="hint" data-i18n="unit.fcd">fire-cell-days (VIIRS-equivalent)</p>
+              <p id="now-badge" class="badge"></p>
+            </div>
+            <dl class="now-stats">
+              <div><dt data-i18n="now.median">Median</dt><dd id="now-median">–</dd></div>
+              <div><dt data-i18n="now.anomaly">Anomaly</dt><dd id="now-anomaly">–</dd></div>
+              <div><dt data-i18n="now.percentile">Percentile</dt><dd id="now-pct">–</dd></div>
+              <div><dt data-i18n="now.rank">Rank</dt><dd id="now-rank">–</dd></div>
+            </dl>
+            <figure id="now-box" class="chart small"></figure>
+          </div>
+          <p id="normal-sentence" class="sentence"></p>
+        </div>
+
+        <div class="card" aria-labelledby="h-cal">
+          <div class="card-head">
+            <h2 id="h-cal" data-i18n="cal.title">Burning activity calendar</h2>
+            <div class="toolbar">
+              <fieldset class="seg">
+                <legend class="visually-hidden" data-i18n="cal.mode">Color mode</legend>
+                <label><input type="radio" name="mode" value="count" checked /> <span data-i18n="cal.counts">Counts</span></label>
+                <label><input type="radio" name="mode" value="anomaly" /> <span data-i18n="cal.anomaly">Anomaly vs median</span></label>
+              </fieldset>
+              <fieldset class="seg">
+                <legend class="visually-hidden" data-i18n="cal.view">View</legend>
+                <label><input type="radio" name="view" value="grid" checked /> <span data-i18n="cal.grid">Calendar</span></label>
+                <label><input type="radio" name="view" value="clock" /> <span data-i18n="cal.clock">Fire Season Clock</span></label>
+                <label><input type="radio" name="view" value="table" /> <span data-i18n="cal.table">Read as table</span></label>
+              </fieldset>
+            </div>
+          </div>
+          <div class="toolbar">
+            <label><input type="checkbox" id="static" /> <span data-i18n="cal.static">Include static / industrial sources</span></label>
+            <label><input type="checkbox" id="modis-only" /> <span data-i18n="cal.modisonly">Advanced: MODIS-only series (not harmonized)</span></label>
+          </div>
+          <div id="calendar" class="chart scroll-x"></div>
+          <div id="cal-legend" class="legend"></div>
+          <div class="toolbar">
+            <button class="btn btn-quiet" data-dl="calendar-png" type="button" data-i18n="dl.png">PNG</button>
+            <button class="btn btn-quiet" data-dl="calendar-svg" type="button" data-i18n="dl.svg">SVG</button>
+            <button class="btn btn-quiet" data-dl="matrix-csv" type="button" data-i18n="dl.matrix">Calendar + anomaly table (CSV)</button>
+          </div>
+        </div>
+
+        <div class="card" aria-labelledby="h-charts">
+          <h2 id="h-charts" data-i18n="charts.title">Trends and season</h2>
+          <div class="chart-grid">
+            <figure class="chart-fig">
+              <figcaption data-i18n="charts.annual">Annual totals and trend</figcaption>
+              <div id="chart-annual" class="chart"></div>
+              <p id="chart-annual-alt" class="hint"></p>
+              <div class="toolbar"><button class="btn btn-quiet" data-dl="annual-png" type="button" data-i18n="dl.png">PNG</button><button class="btn btn-quiet" data-table="annual" type="button" aria-expanded="false" data-i18n="cal.table">Read as table</button></div>
+              <div id="table-annual" class="table-wrap" hidden></div>
+            </figure>
+            <figure class="chart-fig">
+              <figcaption data-i18n="charts.season">Seasonal profile</figcaption>
+              <div id="chart-season" class="chart"></div>
+              <p id="chart-season-alt" class="hint"></p>
+              <div class="toolbar"><button class="btn btn-quiet" data-dl="season-png" type="button" data-i18n="dl.png">PNG</button><button class="btn btn-quiet" data-table="season" type="button" aria-expanded="false" data-i18n="cal.table">Read as table</button></div>
+              <div id="table-season" class="table-wrap" hidden></div>
+            </figure>
+            <figure class="chart-fig">
+              <figcaption data-i18n="charts.top">Ten busiest months</figcaption>
+              <div id="chart-top" class="chart"></div>
+              <div class="toolbar"><button class="btn btn-quiet" data-dl="top-png" type="button" data-i18n="dl.png">PNG</button><button class="btn btn-quiet" data-table="top" type="button" aria-expanded="false" data-i18n="cal.table">Read as table</button></div>
+              <div id="table-top" class="table-wrap" hidden></div>
+            </figure>
+          </div>
+        </div>
+
+        <div class="card" aria-labelledby="h-live">
+          <div class="card-head">
+            <h2 id="h-live" data-i18n="live.title">Live hotspots and advisory</h2>
+            <fieldset class="seg">
+              <legend class="visually-hidden" data-i18n="live.window">Time window</legend>
+              <label><input type="radio" name="window" value="24" /> 24 h</label>
+              <label><input type="radio" name="window" value="48" checked /> 48 h</label>
+              <label><input type="radio" name="window" value="168" /> 7 d</label>
+            </fieldset>
+          </div>
+          <p id="live-status" class="banner info" role="status" aria-live="polite"></p>
+          <div id="advisory"></div>
+        </div>
+
+        <div class="card" aria-labelledby="h-dl">
+          <h2 id="h-dl" data-i18n="dl.title">Downloads</h2>
+          <div class="toolbar">
+            <button class="btn btn-primary" data-dl="hotspots-csv" type="button" data-i18n="dl.hotspots">Raw hotspots (CSV)</button>
+            <button class="btn" data-dl="matrix-csv" type="button" data-i18n="dl.matrix">Calendar + anomaly table (CSV)</button>
+            <button class="btn" data-dl="briefing-pdf" type="button" data-i18n="dl.briefing">Fire Situation Briefing (PDF)</button>
+            <button id="share" class="btn btn-quiet" type="button" data-i18n="dl.share">Copy share link</button>
+          </div>
+          <p id="dl-status" class="hint" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="card prose" id="methods" aria-labelledby="h-methods">
+          <h2 id="h-methods" data-i18n="methods.title">Methods in plain language</h2>
+          <div id="methods-body"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p data-i18n="footer.firms">We acknowledge the use of data and/or imagery from NASA's Fire Information for Resource Management System (FIRMS) (https://earthdata.nasa.gov/firms), part of NASA's Earth Observing System Data and Information System (EOSDIS).</p>
+      <p data-i18n="footer.nasa">NASA does not endorse any non-U.S. Government entity and is not responsible for information contained on non-U.S. Government websites.</p>
+      <p data-i18n="footer.safety">Follow instructions from your local civil protection and fire authorities. In an emergency, call your local emergency number.</p>
+      <p id="footer-attrib"></p>
+    </footer>
+
+    <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

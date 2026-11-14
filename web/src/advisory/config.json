@@ -1,0 +1,42 @@
+{
+  "windowHours": 48,
+  "clusterEpsKm": 1.5,
+  "clusterMinPoints": 3,
+  "persistHours": 6,
+  "tier1MaxHotspots": 5,
+  "anomalyHighPct": 100,
+  "windStrongKmh": 30,
+  "frpHighMw": 100,
+  "frpTotalHighMw": 500,
+  "multiClusterCount": 3,
+  "settlementNearKm": 5,
+  "rhLowPct": 25,
+  "downwindConeDeg": 30,
+  "downwindRangeKm": 25,
+  "stagingMinKm": 3,
+  "stagingMaxKm": 10,
+  "exposureRadiusM": 25000,
+  "resources": {
+    "1": { "crews": [1, 1], "engines": [0, 1], "tenders": [0, 0], "dozers": [0, 0], "aircraft": [0, 0], "drones": [0, 1], "medical": [0, 0] },
+    "2": { "crews": [1, 2], "engines": [1, 2], "tenders": [1, 1], "dozers": [0, 1], "aircraft": [0, 0], "drones": [1, 1], "medical": [0, 1] },
+    "3": { "crews": [2, 4], "engines": [2, 4], "tenders": [1, 2], "dozers": [1, 2], "aircraft": [1, 2], "drones": [1, 2], "medical": [1, 1] },
+    "4": { "crews": [4, 8], "engines": [4, 8], "tenders": [2, 4], "dozers": [2, 3], "aircraft": [2, 4], "drones": [2, 2], "medical": [2, 3] }
+  },
+  "contacts": {
+    "default": {
+      "verified": true,
+      "note": "112 works in the EU and many other countries. Check the number for your country.",
+      "numbers": [{ "label": "Emergency (many countries)", "number": "112" }]
+    },
+    "MAR": {
+      "verified": false,
+      "note": "Numbers listed for Morocco; confirm against official government sources before operational use.",
+      "numbers": [
+        { "label": "Protection Civile (fire and rescue)", "number": "15" },
+        { "label": "Gendarmerie Royale (outside cities)", "number": "177" },
+        { "label": "Police (in cities)", "number": "19" },
+        { "label": "Agence Nationale des Eaux et Forêts (forest fires)", "number": "" }
+      ]
+    }
+  }
+}
