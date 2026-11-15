@@ -176,7 +176,7 @@ Deployed on AWS in eu-west-3 (Paris) on 15 November 2026, paid with the team's A
 
 | Part | Service | State |
 |---|---|---|
-| Static site and data tiles | Amplify Hosting (manual zip deployment) | live at https://fireledger.earth |
+| Static site and data tiles | Amplify Hosting, built from GitHub on every push to `main` | live at https://fireledger.earth |
 | `/api/nrt`, `/api/weather`, `/api/export` | three Lambda functions (Python 3.12, arm64) with Function URLs, behind Amplify rewrites | live; tested through the site's own origin |
 | FIRMS MAP_KEY | SSM Parameter Store, SecureString `/fireledger/FIRMS_MAP_KEY` | read only by the functions; absent from responses and the repository |
 | Cache | S3 bucket, 15 min for NRT | second identical request served from cache |

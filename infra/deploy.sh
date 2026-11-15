@@ -9,9 +9,9 @@
 # The FIRMS MAP_KEY must already be in SSM Parameter Store (never in this repository):
 #   aws ssm put-parameter --name /fireledger/FIRMS_MAP_KEY --type SecureString --value <KEY> --region eu-west-3
 #
-# Without a connected Git repository Amplify does not build by itself, so "frontend"
-# uploads the built site as a zip (manual deployment). Connect the repository in the
-# Amplify console later to get automatic deploys on every push (amplify.yml is ready).
+# The production app is connected to GitHub: every push to main is built by Amplify with
+# amplify.yml (monorepo, appRoot web). "frontend" then only refreshes rewrites/headers and
+# starts a rebuild. On an app without a repository it builds locally and uploads a zip.
 set -euo pipefail
 
 export AWS_DEFAULT_REGION="${AWS_REGION:-eu-west-3}"
@@ -83,6 +83,19 @@ PYEOF
     aws amplify create-branch --app-id "$app" --branch-name main --stage PRODUCTION >/dev/null
   fi
   aws amplify update-app --app-id "$app" --custom-rules "file://$WORK_NATIVE/rules.json" --custom-headers "file://customHttp.yml" >/dev/null
+
+  # connected to GitHub: Amplify builds every push to main itself; here we only start a rebuild
+  if [ "$(aws amplify get-app --app-id "$app" --query app.repository --output text | tr -d '[:cntrl:]')" != "None" ]; then
+    job="$(aws amplify start-job --app-id "$app" --branch-name main --job-type RELEASE --query jobSummary.jobId --output text | tr -d '[:cntrl:]')"
+    for _ in $(seq 1 90); do
+      sleep 8
+      status="$(aws amplify get-job --app-id "$app" --branch-name main --job-id "$job" --query job.summary.status --output text)"
+      [ "$status" = "SUCCEED" ] || [ "$status" = "FAILED" ] && break
+    done
+    echo "Amplify build $job (from GitHub): $status"
+    [ "$status" = "SUCCEED" ]
+    return
+  fi
 
   # a deployment that was created but never started blocks the next one: cancel leftovers
   for stuck in $(aws amplify list-jobs --app-id "$app" --branch-name main \

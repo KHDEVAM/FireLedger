@@ -42,8 +42,11 @@ python -m pytest -q && (cd web && npm test)
 node web/scripts/e2e-flow.mjs                          # browser click-through (dev server running, Chrome installed)
 python web/scripts/check_ramps.py                      # colour ramps under colour-vision deficiency
 
-# deploy (AWS CLI logged in; MAP_KEY already in SSM, see infra/deploy.sh)
-bash infra/deploy.sh all
+# site: pushing to main deploys it (Amplify builds from GitHub)
+git push origin main
+# backend, or a forced site rebuild (AWS CLI logged in; MAP_KEY already in SSM, see infra/deploy.sh)
+bash infra/deploy.sh backend
+bash infra/deploy.sh frontend
 ```
 
 ## Harmonization in short
