@@ -8,7 +8,7 @@
 |---|---|
 | Challenge | NASA Space Apps Challenge 2026 — burning activity calendar |
 | Team | *to be completed by the team* |
-| Live URL | https://main.d2te61mh65mx1.amplifyapp.com — custom domain https://fireledger.earth is attached and waits for its DNS records (§7.4) |
+| Live URL | https://fireledger.earth |
 | Repository | https://github.com/KHDEVAM/FireLedger |
 | Date | 15 November 2026 |
 | Demo region | Morocco, January 2001 → 14 November 2026 |
@@ -128,7 +128,7 @@ At region-month level (n = 3,759) the selected model reaches R² 0.73 and MAE 2.
 
 - **26 Python tests** (`tests/`): deterministic grid snapping; no SP/NRT double counting; pixel clusters collapsing to one fire-cell-day and satellites merging by union; no-data months staying NaN; overlap totals within the validation band; API input validation; the MAP_KEY never appearing in responses.
 - **18 web tests** (`web/tests/`): area selection; anomaly math; the month-in-progress comparison; the calendar CSV matching on-screen totals; advisory tiers; watch-zone export; translation completeness.
-- **18 browser checks** (`web/scripts/e2e-flow.mjs`, real mouse and keyboard events in headless Chrome): region list, rectangle and polygon drawing, Escape, coordinate entry and invalid input, place search, comparison, watch zones, table view, arrow-key navigation, time-lapse. Last full pass: the deployed site, in demonstration mode (simulated live hotspots).
+- **18 browser checks** (`web/scripts/e2e-flow.mjs`, real mouse and keyboard events in headless Chrome): region list, rectangle and polygon drawing, Escape, coordinate entry and invalid input, place search, comparison, watch zones, table view, arrow-key navigation, time-lapse. Last full pass: https://fireledger.earth, in demonstration mode (simulated live hotspots).
 - **Colour ramps** (`web/scripts/check_ramps.py`): lightness of the fire ramp falls steadily (L* 95 → 18) and neighbouring steps stay at least ΔE 10 apart under simulated deuteranopia, protanopia and tritanopia. The first run failed for deuteranopia (ΔE 7 between two reds), so three ramp steps were shifted slightly from the brand hexes.
 - **Lighthouse accessibility:** 100 (local build, demonstration mode).
 - **Infrastructure template:** passes `cfn-lint`.
@@ -176,17 +176,17 @@ Deployed on AWS in eu-west-3 (Paris) on 15 November 2026, paid with the team's A
 
 | Part | Service | State |
 |---|---|---|
-| Static site and data tiles | Amplify Hosting (manual zip deployment) | live at https://main.d2te61mh65mx1.amplifyapp.com |
+| Static site and data tiles | Amplify Hosting (manual zip deployment) | live at https://fireledger.earth |
 | `/api/nrt`, `/api/weather`, `/api/export` | three Lambda functions (Python 3.12, arm64) with Function URLs, behind Amplify rewrites | live; tested through the site's own origin |
 | FIRMS MAP_KEY | SSM Parameter Store, SecureString `/fireledger/FIRMS_MAP_KEY` | read only by the functions; absent from responses and the repository |
 | Cache | S3 bucket, 15 min for NRT | second identical request served from cache |
 | Schedule | EventBridge Scheduler, every 3 hours | enabled; a test run wrote `latest/*.json` |
 | Logs | CloudWatch, 7 days | — |
-| Custom domain | Amplify domain association for fireledger.earth and www | created; **waiting for the DNS records at Porkbun** |
+| Custom domain | Amplify domain association for fireledger.earth and www | available; HTTPS certificate issued by Amazon; `www` and plain HTTP redirect to https://fireledger.earth |
 
 The backend is one CloudFormation stack (`infra/template.yaml`, SAM transform) and everything is reproducible with `bash infra/deploy.sh all`, which needs only the AWS CLI. Two findings from the deployment are built into the script: the AWS CLI packager ignores `CodeUri` in the template's Globals section, and Amplify rewrites need the exact path plus a `/<*>` form (`/api/nrt<*>` does not match).
 
-DNS at Porkbun (domain stays registered there): delete the parking records, then add the ACM validation CNAME, an ALIAS for the root and a CNAME for `www`, both pointing to the CloudFront name Amplify shows.
+DNS at Porkbun (the domain stays registered there): the parking records were replaced by the ACM validation CNAME, an ALIAS for the root and a CNAME for `www`, both pointing to the CloudFront name Amplify shows. Amplify verified the domain about eight minutes after the records were visible.
 
 Not done: the AWS Budgets alert, connecting the GitHub repository to Amplify for automatic deploys on push, and SES e-mail alerts.
 
@@ -206,7 +206,7 @@ Expected cost at hackathon traffic is a few US dollars per month or less (estima
 
 ## 9. Future work
 
-- Finish the DNS, add the FIRMS missing-data flags, schedule the pipeline so the record grows daily, and widen to more countries.
+- Add the FIRMS missing-data flags, schedule the pipeline so the record grows daily, and widen to more countries.
 - Calibrate NOAA-21 against NOAA-20 as its record grows, so it can fill gaps.
 - Burned-area products (MCD64A1, VIIRS burned area) and FRP-weighted calendars.
 - Land cover (MCD12Q1) for the advisory and for calibration regions; a population grid.

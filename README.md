@@ -6,7 +6,7 @@ FireLedger harmonizes NASA FIRMS active-fire hotspots from MODIS (2000→) and V
 
 Current demo region: **Morocco**, Jan 2001 → 14 Nov 2026 (FIRMS yearly country files to 2025, FIRMS area API for 2026).
 
-Live now: https://main.d2te61mh65mx1.amplifyapp.com (the custom domain is attached and waits for its DNS records).
+Live at https://fireledger.earth.
 
 ## What is in the repository
 
@@ -56,7 +56,7 @@ bash infra/deploy.sh all
 
 Working and deployed: pipeline on real FIRMS data through mid-November 2026, calendar, anomaly view, charts, comparison of two areas, watch zones, exports, live hotspots and advisory, API on AWS Lambda, site on Amplify Hosting.
 
-Not done yet: DNS records for fireledger.earth at Porkbun, AWS budget alert, automatic deploys from GitHub, e-mail alerts (SES), FIRMS missing-data flags. See `REPORT.md` for methods, validation and limitations.
+Not done yet: AWS budget alert, automatic deploys from GitHub, e-mail alerts (SES), FIRMS missing-data flags. See `REPORT.md` for methods, validation and limitations.
 
 ## Acknowledgment and disclaimers
 
