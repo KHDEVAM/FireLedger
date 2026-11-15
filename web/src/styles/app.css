@@ -115,7 +115,7 @@ a {
 /* layout */
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 16px;
   padding: 16px;
   max-width: 1600px;
@@ -294,7 +294,7 @@ input[type="radio"] {
   overflow: hidden;
 }
 #map {
-  height: 420px;
+  height: clamp(480px, 66vh, 820px);
   width: 100%;
 }
 .map-controls {
@@ -619,7 +619,7 @@ caption {
     overflow: visible;
   }
   #map {
-    height: 320px;
+    height: clamp(360px, 58vh, 560px);
   }
   .now {
     grid-template-columns: 1fr 1fr;

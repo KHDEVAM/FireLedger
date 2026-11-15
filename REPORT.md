@@ -7,7 +7,7 @@
 | | |
 |---|---|
 | Challenge | NASA Space Apps Challenge 2026 — burning activity calendar |
-| Team | *to be completed by the team* |
+| Team | Khalid Ammar, Walid Rezagaoui, Imad Labrini |
 | Live URL | https://fireledger.earth |
 | Repository | https://github.com/KHDEVAM/FireLedger |
 | Date | 15 November 2026 |
@@ -201,7 +201,7 @@ Expected cost at hackathon traffic is a few US dollars per month or less (estima
 - Areas are resolved on a 0.25° grid; small areas are approximated by the cells they touch. The raw hotspot CSV is filtered exactly.
 - Population figures in the advisory are sums of OpenStreetMap tags and are incomplete. Land cover is not used yet. Nearby places come from public Overpass servers, which were unreachable in the last production test; the advisory then says so instead of guessing.
 - Live hotspots have no FIRMS `type` field, so industrial heat sources appear among them.
-- The Morocco emergency numbers (15, 177, 19) match a Fondation Mohammed V directory but were not confirmed on a government site; the app marks them as unverified.
+- The Morocco emergency numbers (15, 177, 19) were confirmed by the team and match a Fondation Mohammed V directory; they were not found on a government web page.
 - The advisory is decision support, not an official order. Follow local civil protection and fire authorities.
 
 ## 9. Future work

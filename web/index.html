@@ -47,6 +47,25 @@
     <main id="main" class="layout">
       <!-- ───────────── left column: area + map ───────────── -->
       <section class="col-map" aria-labelledby="h-area">
+        <div class="card map-card">
+          <div id="map" role="application" aria-label="Map"></div>
+          <div class="map-controls">
+            <fieldset class="seg">
+              <legend data-i18n="map.layers">Map layers</legend>
+              <label><input type="checkbox" id="layer-density" checked /> <span data-i18n="map.density">Harmonized density</span></label>
+              <label><input type="checkbox" id="layer-nrt" checked /> <span data-i18n="map.nrt">Live hotspots</span></label>
+              <label><input type="checkbox" id="layer-gibs" /> <span data-i18n="map.gibs">NASA true-color imagery</span></label>
+            </fieldset>
+            <div class="timelapse">
+              <button id="tl-play" class="btn" type="button" aria-pressed="false" data-i18n="map.play">Play time-lapse</button>
+              <label class="visually-hidden" for="tl-slider" data-i18n="map.month">Month</label>
+              <input id="tl-slider" type="range" min="0" max="0" value="0" disabled />
+              <output id="tl-label" for="tl-slider"></output>
+            </div>
+            <div id="map-legend" class="legend"></div>
+          </div>
+        </div>
+
         <div class="card">
           <h2 id="h-area" data-i18n="area.title">1 · Choose an area</h2>
           <div class="field-row">
@@ -91,25 +110,6 @@
             <div class="field"><label for="from" data-i18n="range.from">From</label><input id="from" class="input" type="month" /></div>
             <div class="field"><label for="to" data-i18n="range.to">To</label><input id="to" class="input" type="month" /></div>
             <button id="range-all" class="btn btn-quiet" type="button" data-i18n="range.all">Full record</button>
-          </div>
-        </div>
-
-        <div class="card map-card">
-          <div id="map" role="application" aria-label="Map"></div>
-          <div class="map-controls">
-            <fieldset class="seg">
-              <legend data-i18n="map.layers">Map layers</legend>
-              <label><input type="checkbox" id="layer-density" checked /> <span data-i18n="map.density">Harmonized density</span></label>
-              <label><input type="checkbox" id="layer-nrt" checked /> <span data-i18n="map.nrt">Live hotspots</span></label>
-              <label><input type="checkbox" id="layer-gibs" /> <span data-i18n="map.gibs">NASA true-color imagery</span></label>
-            </fieldset>
-            <div class="timelapse">
-              <button id="tl-play" class="btn" type="button" aria-pressed="false" data-i18n="map.play">Play time-lapse</button>
-              <label class="visually-hidden" for="tl-slider" data-i18n="map.month">Month</label>
-              <input id="tl-slider" type="range" min="0" max="0" value="0" disabled />
-              <output id="tl-label" for="tl-slider"></output>
-            </div>
-            <div id="map-legend" class="legend"></div>
           </div>
         </div>
       </section>
