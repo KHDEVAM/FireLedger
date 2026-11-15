@@ -115,7 +115,7 @@ a {
 /* layout */
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
   gap: 16px;
   padding: 16px;
   max-width: 1600px;
@@ -292,9 +292,10 @@ input[type="radio"] {
 .map-card {
   padding: 0;
   overflow: hidden;
+  grid-column: 1 / -1;
 }
 #map {
-  height: clamp(480px, 66vh, 820px);
+  height: clamp(540px, 74vh, 1000px);
   width: 100%;
 }
 .map-controls {
@@ -619,7 +620,7 @@ caption {
     overflow: visible;
   }
   #map {
-    height: clamp(360px, 58vh, 560px);
+    height: clamp(400px, 68vh, 640px);
   }
   .now {
     grid-template-columns: 1fr 1fr;
@@ -668,6 +669,7 @@ caption {
 }
 @media print {
   .col-map,
+  .map-card,
   .site-header .header-tools {
     display: none;
   }
