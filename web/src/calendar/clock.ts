@@ -23,6 +23,7 @@ export function renderClock(container: HTMLElement, model: CalendarModel, opts: 
     .attr('width', size)
     .attr('height', size)
     .attr('role', 'img')
+    .attr('direction', 'ltr')
     .attr('aria-label', `${t('cal.clock')}. ${t('clock.alt')}`)
     .attr('font-family', fonts.body())
     .attr('font-size', 11);

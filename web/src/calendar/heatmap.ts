@@ -73,6 +73,7 @@ export function renderHeatmap(container: HTMLElement, model: CalendarModel, opts
     .attr('width', width)
     .attr('height', height)
     .attr('role', 'grid')
+    .attr('direction', 'ltr')
     .attr('aria-label', t('cal.title'))
     .attr('font-family', fonts.body())
     .attr('font-size', 11);

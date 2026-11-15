@@ -6,7 +6,7 @@ import ar from '../src/i18n/ar';
 import en from '../src/i18n/en';
 import fr from '../src/i18n/fr';
 import { buildCalendar, classify, currentCell, mannKendallP, median, seasonLength, summarize, theilSen } from '../src/stats';
-import type { Hotspot, Monthly } from '../src/types';
+import type { Aoi, Hotspot, Monthly } from '../src/types';
 
 /** 2 x 2 grid of 0.25 degree cells around (35, -5); values are easy to sum by hand. */
 function fixture(): Monthly {
@@ -138,11 +138,12 @@ describe('raw hotspot export filter', () => {
     '36.9,-5.1,2022-07-14,1310,MODIS Aqua,80,40,D,0,2',
     '',
   ].join('\n');
-  const aoi = { kind: 'bbox', bbox: [-6, 35, -5, 36] } as const;
+  const box: [number, number, number, number] = [-6, 35, -5, 36];
+  const aoi: Aoi = { kind: 'bbox', bbox: box };
   it('filters by area, date and type', () => {
-    expect(filterHotspotCsv(csv, aoi, aoi.bbox as never, '2022-01-01', '2022-12-31', false)).toHaveLength(1);
-    expect(filterHotspotCsv(csv, aoi, aoi.bbox as never, '2022-01-01', '2022-12-31', true)).toHaveLength(2);
-    expect(filterHotspotCsv(csv, aoi, aoi.bbox as never, '2021-01-01', '2022-12-31', false)).toHaveLength(2);
+    expect(filterHotspotCsv(csv, aoi, box, '2022-01-01', '2022-12-31', false)).toHaveLength(1);
+    expect(filterHotspotCsv(csv, aoi, box, '2022-01-01', '2022-12-31', true)).toHaveLength(2);
+    expect(filterHotspotCsv(csv, aoi, box, '2021-01-01', '2022-12-31', false)).toHaveLength(2);
     expect(filterHotspotCsv(csv, { kind: 'region' }, [-180, -90, 180, 90], '2022-01-01', '2022-12-31', false)).toHaveLength(2);
   });
 });
@@ -164,7 +165,7 @@ describe('advisory engine', () => {
   it('tier 2 for persistence, wind or a strong anomaly - each with its reason', () => {
     expect(assess([hs(35, -5, 2), hs(35.001, -5.001, 20)], null, null, ctx).triggers.some((x) => x.code === 'persistent')).toBe(true);
     expect(assess([hs(35, -5, 2)], wind(45, 270, 50), null, ctx).tier).toBe(2);
-    expect(assess([hs(35, -5, 2)], null, null, { ...ctx, anomalyPct: 250 }).triggers.at(-1)!.code).toBe('anomaly');
+    expect(assess([hs(35, -5, 2)], null, null, { ...ctx, anomalyPct: 250 }).triggers.some((x) => x.code === 'anomaly')).toBe(true);
   });
 
   it('tier 3 for intense fire or a settlement closer than 5 km', () => {

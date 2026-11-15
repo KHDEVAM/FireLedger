@@ -16,6 +16,7 @@ function frame(container: HTMLElement, width: number, height: number, label: str
     .attr('height', height)
     .attr('role', 'img')
     .attr('aria-label', label)
+    .attr('direction', 'ltr')
     .attr('font-family', fonts.body())
     .attr('font-size', 11);
 }

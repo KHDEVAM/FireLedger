@@ -606,6 +606,16 @@ caption {
   .site-header {
     justify-content: space-between;
     padding: 8px 10px;
+    gap: 8px;
+  }
+  .header-tools a.btn {
+    display: none;
+  }
+  .header-tools .select {
+    max-width: 120px;
+  }
+  .now {
+    grid-template-columns: 1fr;
   }
   .btn,
   .select,

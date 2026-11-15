@@ -48,7 +48,7 @@ python -m pytest -q && (cd web && npm test)
 ## Status
 
 Working: pipeline on real FIRMS data, calendar, anomaly view, charts, exports, advisory engine, tests.
-Not done yet: AWS deployment, live feed test with a real MAP_KEY, recent tail (2026) download, watch-zone UI, `REPORT.md`.
+Not done yet: AWS deployment, live feed test with a real MAP_KEY, recent tail (2026) download, watch-zone UI. See `REPORT.md` for methods, validation and limitations.
 
 ## Acknowledgment and disclaimers
 

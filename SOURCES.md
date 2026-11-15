@@ -9,7 +9,7 @@ Access date for all entries unless stated otherwise: **2026-11-14**.
 
 - Citation page: https://www.earthdata.nasa.gov/learn/find-data/near-real-time/citation
 - FIRMS disclaimer: https://www.earthdata.nasa.gov/learn/find-data/near-real-time/citation#ed-lance-disclaimer
-- Re-check the wording against the citation page before the final submission.
+- Checked 2026-11-15: an automated read of the citation page returned only the general statement "NASA should be acknowledged as the source of the material where applicable" and did not show the FIRMS sentence above. The sentence above is the form widely reproduced from that page; a team member should open the page and confirm the current wording before the final submission.
 
 NASA does not endorse any non-U.S. Government entity and is not responsible for information contained on non-U.S. Government websites.
 

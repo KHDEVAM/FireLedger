@@ -30,7 +30,7 @@
     },
     "MAR": {
       "verified": false,
-      "note": "Numbers listed for Morocco; confirm against official government sources before operational use.",
+      "note": "15, 177 and 19 match the Fondation Mohammed V 'Marhaba' emergency directory (checked 2026-11-15); not yet confirmed on a Moroccan government site.",
       "numbers": [
         { "label": "Protection Civile (fire and rescue)", "number": "15" },
         { "label": "Gendarmerie Royale (outside cities)", "number": "177" },

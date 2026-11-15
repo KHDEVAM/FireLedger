@@ -31,7 +31,7 @@ export class FireMap {
       fitBoundsOptions: { padding: 20 },
       attributionControl: { compact: true },
       // needed to copy the map into the PDF briefing
-      canvasContextAttributes: { preserveDrawingBuffer: true },
+      preserveDrawingBuffer: true,
     } as maplibregl.MapOptions);
     this.map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
     this.map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }));
@@ -50,7 +50,7 @@ export class FireMap {
     });
     m.addLayer({ id: 'gibs', type: 'raster', source: 'gibs', layout: { visibility: 'none' } });
     for (const id of ['density', 'aoi', 'wind', 'nrt', 'sketch']) m.addSource(id, { type: 'geojson', data: empty() });
-    m.addLayer({ id: 'density', type: 'fill', source: 'density', paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.72 } });
+    m.addLayer({ id: 'density', type: 'fill', source: 'density', paint: { 'fill-color': ['get', 'color'], 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 5, 0.75, 8, 0.45, 10, 0.3] } });
     m.addLayer({ id: 'aoi', type: 'line', source: 'aoi', paint: { 'line-color': tok('--fl-satellite-blue'), 'line-width': 2.5 } });
     m.addLayer({ id: 'wind', type: 'line', source: 'wind', paint: { 'line-color': tok('--fl-ledger-navy'), 'line-width': 3, 'line-dasharray': [1.5, 1] } });
     m.addLayer({
