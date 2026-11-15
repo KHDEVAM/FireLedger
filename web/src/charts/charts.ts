@@ -148,6 +148,35 @@ export function renderBox(container: HTMLElement, model: CalendarModel, cell: Ca
   svg.append('text').attr('x', Math.min(Math.max(cx, 30), W - 30)).attr('y', 9).attr('text-anchor', 'middle').attr('fill', ink).attr('font-weight', 700).attr('font-size', 10).text(`${cell.year}: ${fmt(cell.value ?? 0)}`);
 }
 
+/** Seasonal median profiles of two areas. A is dashed, B is solid: never color alone. */
+export function renderCompare(container: HTMLElement, a: Summary, b: Summary, nameA: string, nameB: string): void {
+  const W = 460;
+  const H = 250;
+  const m = { l: 44, r: 10, t: 34, b: 26 };
+  const svg = frame(container, W, H, t('cmp.chart'));
+  const val = (v: number) => (Number.isFinite(v) ? v : 0);
+  const max = Math.max(...a.profile.map((p) => val(p.median)), ...b.profile.map((p) => val(p.median)), 1);
+  const x = d3.scalePoint<number>().domain(d3.range(1, 13)).range([m.l + 12, W - m.r - 12]);
+  const y = d3.scaleLinear().domain([0, max * 1.08]).nice().range([H - m.b, m.t]);
+  svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).tickFormat((d) => monthName(d as number, 'narrow')).tickSizeOuter(0)).call(styleAxis);
+  svg.append('g').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5)).call(styleAxis);
+  const line = d3.line<Summary['profile'][number]>().x((p) => x(p.month)!).y((p) => y(val(p.median)));
+  const series = [
+    { s: a, color: tok('--link'), dash: '6 4', name: `${t('cmp.a')}: ${nameA}` },
+    { s: b, color: tok('--fl-fire-orange'), dash: '', name: `${t('cmp.b')}: ${nameB}` },
+  ];
+  series.forEach((d, i) => {
+    svg.append('path').attr('d', line(d.s.profile)).attr('fill', 'none').attr('stroke', d.color).attr('stroke-width', 2.5).attr('stroke-dasharray', d.dash);
+    d.s.profile.forEach((p) => {
+      const dot = svg.append('circle').attr('cx', x(p.month)!).attr('cy', y(val(p.median))).attr('r', 3.5).attr('fill', d.color).attr('stroke', tok('--surface'));
+      hover(dot.node()!, [`${d.name}`, `${monthName(p.month, 'long')}: ${fmt(val(p.median))} ${t('unit.fcd')}`]);
+    });
+    const ly = 8 + i * 13;
+    svg.append('line').attr('x1', m.l).attr('x2', m.l + 24).attr('y1', ly).attr('y2', ly).attr('stroke', d.color).attr('stroke-width', 2.5).attr('stroke-dasharray', d.dash);
+    svg.append('text').attr('x', m.l + 30).attr('y', ly + 3.5).attr('fill', tok('--text')).attr('font-size', 10).text(d.name.length > 62 ? `${d.name.slice(0, 60)}…` : d.name);
+  });
+}
+
 /* ---------- table alternatives ---------- */
 
 const table = (caption: string, head: string[], rows: (string | number)[][]) =>

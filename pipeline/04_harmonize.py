@@ -41,7 +41,10 @@ def build_reference(m: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
         snpp_last = int(by_year.index[by_year["SNPP"] > 0].max())
         overlap = [int(y) for y in n20_years if switch <= y <= snpp_last]
         if overlap:
-            o = veg[veg["year"].isin(overlap)]
+            # only months in which both satellites delivered data (S-NPP ends before NOAA-20)
+            by_month = veg.groupby(["year", "month"])[["SNPP", "N20"]].sum()
+            both = by_month[(by_month["SNPP"] > 0) & (by_month["N20"] > 0)].index
+            o = veg[veg["year"].isin(overlap) & pd.MultiIndex.from_frame(veg[["year", "month"]]).isin(both)]
             k = float(o["SNPP"].sum() / o["N20"].sum())
             use_n20 = m["year"] >= switch  # NOAA-20 carries the record from the switch year on
             m.loc[use_n20, "ref"] = m.loc[use_n20, "N20"] * k

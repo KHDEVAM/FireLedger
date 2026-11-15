@@ -4,8 +4,11 @@ export function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 }
 
+let shown: { anchor: Element; lines: string[] } | null = null;
+
 /** Tooltip next to an element; first line is the title. */
 export function showTooltip(anchor: Element, lines: string[]): void {
+  shown = { anchor, lines };
   const tip = tooltip();
   tip.innerHTML = lines.map((l, i) => (i === 0 ? `<strong>${escapeHtml(l)}</strong>` : `<span>${escapeHtml(l)}</span><br>`)).join('');
   tip.hidden = false;
@@ -21,7 +24,16 @@ export function showTooltip(anchor: Element, lines: string[]): void {
 }
 
 export function hideTooltip(): void {
+  shown = null;
   tooltip().hidden = true;
+}
+
+/** Keep an open tooltip attached to its element when the page scrolls (keyboard focus can scroll). */
+export function followTooltip(): void {
+  if (!shown) return;
+  const r = shown.anchor.getBoundingClientRect();
+  if (r.bottom < 0 || r.top > window.innerHeight) hideTooltip();
+  else showTooltip(shown.anchor, shown.lines);
 }
 
 export function $(id: string): HTMLElement {

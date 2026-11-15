@@ -18,7 +18,7 @@ import time
 import pandas as pd
 import requests
 
-from lib import RAW, ROOT, load_config
+from lib import BOUNDARY_FILE, RAW, ROOT, load_config
 
 UA = {"User-Agent": "fireledger-pipeline/0.1"}
 
@@ -65,17 +65,27 @@ def download_tail(cfg: dict, key: str, last_archive: dict) -> None:
     avail = pd.read_csv(io.StringIO(
         requests.get(f"{api}/data_availability/csv/{key}/ALL", headers=UA, timeout=60).text))
     avail = avail.set_index("data_id")
-    archive_of = {"MODIS": "modis", "N": "viirs-snpp", "N20": "viirs-jpss1"}
     out_dir = RAW / "tail"
     out_dir.mkdir(parents=True, exist_ok=True)
-    for source, meta in cfg["sources"]["tail_sources"].items():
+    # the tail starts with the first year that has no yearly country file
+    tail_from = dt.date(max(last_archive.values(), default=cfg["years"]["download_from"] - 1) + 1, 1, 1)
+    sources = cfg["sources"]["tail_sources"]
+    # last standard-processing day per satellite: NRT is only fetched after it
+    sp_end = {}
+    for source, meta in sources.items():
+        if meta["proc"] == "SP" and source in avail.index:
+            sp_end[meta["sat"] or "MODIS"] = dt.date.fromisoformat(avail.loc[source, "max_date"])
+    for source, meta in sources.items():
         if source not in avail.index:
             print(f"  --   {source}: not listed by data_availability")
             continue
-        arch = archive_of.get(meta["sat"] or "MODIS")
-        first_year = last_archive.get(arch, cfg["years"]["download_from"] - 1) + 1
-        start = max(dt.date(first_year, 1, 1), dt.date.fromisoformat(avail.loc[source, "min_date"]))
+        start = max(tail_from, dt.date.fromisoformat(avail.loc[source, "min_date"]))
+        if meta["proc"] == "NRT" and (meta["sat"] or "MODIS") in sp_end:
+            start = max(start, sp_end[meta["sat"] or "MODIS"] + dt.timedelta(days=1))
         end = dt.date.fromisoformat(avail.loc[source, "max_date"])
+        if start > end:
+            print(f"  --   {source}: nothing after the yearly files")
+            continue
         frames, day = [], start
         while day <= end:
             n = min(5, (end - day).days + 1)
@@ -91,6 +101,16 @@ def download_tail(cfg: dict, key: str, last_archive: dict) -> None:
             df = pd.concat(frames, ignore_index=True)
             df.to_csv(out_dir / f"{source}.csv", index=False)
             print(f"  ok   tail {source}: {len(df)} rows, {start} -> {end}")
+
+
+def download_boundary(cfg: dict) -> None:
+    """Region outline (geoBoundaries ADM1, see SOURCES.md) used to clip the area-API tail."""
+    if BOUNDARY_FILE.exists():
+        return
+    meta = requests.get(f'https://www.geoboundaries.org/api/current/gbOpen/{cfg["region"]["code"]}/ADM1/', timeout=60).json()
+    BOUNDARY_FILE.parent.mkdir(parents=True, exist_ok=True)
+    BOUNDARY_FILE.write_bytes(requests.get(meta["simplifiedGeometryGeoJSON"], timeout=120).content)
+    print(f"  ok   boundary {BOUNDARY_FILE.name}")
 
 
 def main() -> None:
@@ -112,6 +132,7 @@ def main() -> None:
         pass
     elif key:
         print("FIRMS area API (recent tail)")
+        download_boundary(cfg)
         download_tail(cfg, key, last)
     else:
         print("FIRMS_MAP_KEY not set: skipping the recent tail (the record ends with the last yearly file).")

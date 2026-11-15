@@ -194,6 +194,16 @@
           </div>
         </div>
 
+        <div class="card" aria-labelledby="h-cmp">
+          <h2 id="h-cmp" data-i18n="cmp.title">Compare two areas</h2>
+          <p class="hint" data-i18n="cmp.hint">Pin the current area as A, then choose another area. Both use the same date range and settings.</p>
+          <div class="toolbar">
+            <button id="cmp-pin" class="btn" type="button" data-i18n="cmp.pin">Pin current area as A</button>
+            <button id="cmp-clear" class="btn btn-quiet" type="button" data-i18n="cmp.clear" hidden>Clear comparison</button>
+          </div>
+          <div id="cmp-body"></div>
+        </div>
+
         <div class="card" aria-labelledby="h-live">
           <div class="card-head">
             <h2 id="h-live" data-i18n="live.title">Live hotspots and advisory</h2>
@@ -206,6 +216,20 @@
           </div>
           <p id="live-status" class="banner info" role="status" aria-live="polite"></p>
           <div id="advisory"></div>
+        </div>
+
+        <div class="card" aria-labelledby="h-wz">
+          <h2 id="h-wz" data-i18n="wz.title">Watch zones</h2>
+          <form id="wz-form" class="field-row">
+            <div class="field grow"><label for="wz-name" data-i18n="wz.name">Name for the current area</label><input id="wz-name" class="input" maxlength="40" /></div>
+            <button class="btn" type="submit" data-i18n="wz.save">Save as watch zone</button>
+          </form>
+          <ul id="wz-list" class="zones"></ul>
+          <div class="toolbar">
+            <button id="wz-check" class="btn" type="button" data-i18n="wz.check">Check all now</button>
+            <button id="wz-export" class="btn btn-quiet" type="button" data-i18n="wz.export">Export for e-mail alerts (JSON)</button>
+          </div>
+          <p class="hint" data-i18n="wz.note">Zones are saved in this browser and checked against live hotspots when this page is open. E-mail alerts need the scheduled server function with the exported file.</p>
         </div>
 
         <div class="card" aria-labelledby="h-dl">
@@ -227,7 +251,7 @@
     </main>
 
     <footer class="site-footer">
-      <p data-i18n="footer.firms">We acknowledge the use of data and/or imagery from NASA's Fire Information for Resource Management System (FIRMS) (https://earthdata.nasa.gov/firms), part of NASA's Earth Observing System Data and Information System (EOSDIS).</p>
+      <p data-i18n="footer.firms">We acknowledge the use of data and/or imagery from NASA's Fire Information for Resource Management System (FIRMS) (https://earthdata.nasa.gov/firms), part of NASA's Land, Atmosphere Near real-time Capability for Earth observations (LANCE) (https://earthdata.nasa.gov/lance) and NASA's Earth Science Data and Information System (ESDIS).</p>
       <p data-i18n="footer.nasa">NASA does not endorse any non-U.S. Government entity and is not responsible for information contained on non-U.S. Government websites.</p>
       <p data-i18n="footer.safety">Follow instructions from your local civil protection and fire authorities. In an emergency, call your local emergency number.</p>
       <p id="footer-attrib"></p>

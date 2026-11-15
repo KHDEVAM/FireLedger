@@ -4,7 +4,9 @@
 
 FireLedger harmonizes NASA FIRMS active-fire hotspots from MODIS (2000→) and VIIRS (2012→) into one consistent series and shows it as an interactive burning activity calendar for any area. NASA Space Apps Challenge 2026.
 
-Current demo region: **Morocco**, Jan 2001 → Dec 2025 (FIRMS yearly country files).
+Current demo region: **Morocco**, Jan 2001 → 14 Nov 2026 (FIRMS yearly country files to 2025, FIRMS area API for 2026).
+
+Live now: https://main.d2te61mh65mx1.amplifyapp.com (the custom domain is attached and waits for its DNS records).
 
 ## What is in the repository
 
@@ -13,7 +15,7 @@ Current demo region: **Morocco**, Jan 2001 → Dec 2025 (FIRMS yearly country fi
 | `pipeline/` | Reproducible data pipeline: download → clean → fire-cell-days grid → MODIS↔VIIRS harmonization → aggregates → web tiles → validation figures |
 | `web/` | Vite + TypeScript app: MapLibre map, area drawing, calendar heatmap, Fire Season Clock, charts, live hotspots, Response & Logistics Advisory, CSV/PNG/SVG/PDF exports, English / French / Arabic |
 | `api/` | AWS Lambda handlers (Python): FIRMS NRT proxy, weather proxy, CSV export, scheduled refresh; `api/dev_server.py` runs them locally |
-| `infra/template.yaml` | AWS SAM template (Lambdas, Function URLs, S3 cache, schedule) |
+| `infra/template.yaml`, `infra/deploy.sh` | AWS template (Lambdas, Function URLs, S3 cache, schedule) and a deploy script that needs only the AWS CLI |
 | `SOURCES.md` | Every data source, license and citation |
 | `tests/`, `web/tests/` | pytest and vitest suites |
 
@@ -37,22 +39,28 @@ python api/dev_server.py
 
 # tests
 python -m pytest -q && (cd web && npm test)
+node web/scripts/e2e-flow.mjs                          # browser click-through (dev server running, Chrome installed)
+python web/scripts/check_ramps.py                      # colour ramps under colour-vision deficiency
+
+# deploy (AWS CLI logged in; MAP_KEY already in SSM, see infra/deploy.sh)
+bash infra/deploy.sh all
 ```
 
 ## Harmonization in short
 
 1. Detections are snapped to a common 0.01° grid; per sensor family and day each cell counts once ("fire-cell-day"), satellites are merged by union.
 2. On the MODIS/VIIRS overlap (2012–2025) a per-region model (seasonal background + slope, chosen by leave-one-year-out validation) converts MODIS into VIIRS-equivalent units; 2001–Jan 2012 is backcast, later months use VIIRS directly (S-NPP, then NOAA-20 scaled to S-NPP).
-3. Validation for Morocco (held-out years, monthly, whole region): R² 0.66, bias +0.7 %, MAE 24 vs 76 fire-cell-days for raw MODIS. Figures in `docs/figures/`.
+3. Validation for Morocco (held-out years, monthly, whole region): R² 0.66, bias +0.6 %, MAE 24 vs 76 fire-cell-days for raw MODIS. Figures in `docs/figures/`.
 
 ## Status
 
-Working: pipeline on real FIRMS data, calendar, anomaly view, charts, exports, advisory engine, tests.
-Not done yet: AWS deployment, live feed test with a real MAP_KEY, recent tail (2026) download, watch-zone UI. See `REPORT.md` for methods, validation and limitations.
+Working and deployed: pipeline on real FIRMS data through mid-November 2026, calendar, anomaly view, charts, comparison of two areas, watch zones, exports, live hotspots and advisory, API on AWS Lambda, site on Amplify Hosting.
+
+Not done yet: DNS records for fireledger.earth at Porkbun, AWS budget alert, automatic deploys from GitHub, e-mail alerts (SES), FIRMS missing-data flags. See `REPORT.md` for methods, validation and limitations.
 
 ## Acknowledgment and disclaimers
 
-We acknowledge the use of data and/or imagery from NASA's Fire Information for Resource Management System (FIRMS) (https://earthdata.nasa.gov/firms), part of NASA's Earth Observing System Data and Information System (EOSDIS).
+We acknowledge the use of data and/or imagery from NASA's Fire Information for Resource Management System (FIRMS) (https://earthdata.nasa.gov/firms), part of NASA's Land, Atmosphere Near real-time Capability for Earth observations (LANCE) (https://earthdata.nasa.gov/lance) and NASA's Earth Science Data and Information System (ESDIS).
 
 NASA does not endorse any non-U.S. Government entity and is not responsible for information contained on non-U.S. Government websites.
 

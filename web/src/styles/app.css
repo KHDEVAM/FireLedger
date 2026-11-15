@@ -499,6 +499,43 @@ caption {
   display: block;
 }
 
+.zones {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+}
+.zones li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding: 6px 0;
+}
+.zones .zone-name {
+  font-weight: 700;
+}
+.zones .zone-status {
+  flex: 1;
+  min-width: 160px;
+}
+.zones .alert {
+  color: var(--danger);
+  font-weight: 700;
+}
+.cmp-grid .table-wrap {
+  max-height: none;
+}
+#draw-hint {
+  min-height: 2.7em;
+}
+.cmp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
 /* advisory */
 .tier {
   display: flex;

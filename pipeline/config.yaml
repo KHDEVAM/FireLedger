@@ -4,6 +4,7 @@ region:
   code: MAR
   name: Morocco            # name used in the FIRMS yearly country file names
   bbox: [-17.3, 20.6, -0.8, 36.1]   # W, S, E, N (used for the recent-tail API calls)
+  clip_buffer_deg: 0.0              # tolerance when clipping the tail to the region outline
 
 years:
   start: 2001              # first calendar year shown (MODIS Terra starts Nov 2000)
@@ -25,6 +26,7 @@ sources:
     VIIRS_SNPP_SP: {family: VIIRS, sat: N, proc: SP}      # history only, ended 2 Nov 2026
     VIIRS_NOAA20_SP: {family: VIIRS, sat: N20, proc: SP}
     VIIRS_NOAA20_NRT: {family: VIIRS, sat: N20, proc: NRT}
+    VIIRS_NOAA21_SP: {family: VIIRS, sat: N21, proc: SP}
     VIIRS_NOAA21_NRT: {family: VIIRS, sat: N21, proc: NRT}
 
 filters:

@@ -79,6 +79,12 @@ export interface CalendarInput {
   fromYm: number;
   toYm: number;
   modisOnly?: boolean;
+  /**
+   * Month still in progress at the end of the record. Its history is scaled by
+   * the observed share of the month (fire assumed evenly spread within the month),
+   * so a half-observed month is compared with half of a typical month.
+   */
+  partial?: { ym: number; fraction: number };
 }
 
 /**
@@ -120,13 +126,15 @@ export function buildCalendar(input: CalendarInput): CalendarModel {
 
   for (let mi = 0; mi < 12; mi++) {
     const column = cells.map((row) => row[mi]);
-    const all = column.filter((c) => c.value !== null).map((c) => c.value as number);
+    const full = column.filter((c) => c.value !== null).map((c) => c.value as number);
     for (const cell of column) {
       if (cell.value === null) continue;
+      const scale = input.partial && cell.ym === input.partial.ym ? input.partial.fraction : 1;
       const ref = column
         .filter((c) => c.value !== null && c.year >= baseline[0] && c.year <= baseline[1] && c.year !== cell.year)
-        .map((c) => c.value as number);
+        .map((c) => (c.value as number) * scale);
       if (!ref.length) continue;
+      const all = scale === 1 ? full : column.filter((c) => c.value !== null).map((c) => (c === cell ? (c.value as number) : (c.value as number) * scale));
       const med = median(ref);
       const m = mad(ref);
       cell.median = med;

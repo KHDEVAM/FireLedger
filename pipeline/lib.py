@@ -58,6 +58,42 @@ def cell_center(cell, per_degree: float) -> tuple[np.ndarray, np.ndarray]:
     return (col + 0.5) / per_degree - 180.0, (row + 0.5) / per_degree - 90.0
 
 
+# ----------------------------------------------------------------------- boundary
+
+BOUNDARY_FILE = RAW / "boundary" / "adm1.geojson"
+
+
+def boundary_rings(path: Path | None = None) -> list[np.ndarray]:
+    """Outer rings (lon, lat) of every polygon of the region boundary file."""
+    import json
+
+    geo = json.loads((path or BOUNDARY_FILE).read_text(encoding="utf-8"))
+    rings = []
+    for feature in geo["features"]:
+        g = feature["geometry"]
+        polys = [g["coordinates"]] if g["type"] == "Polygon" else g["coordinates"]
+        rings += [np.asarray(poly[0], dtype="float64") for poly in polys]
+    return rings
+
+
+def inside_rings(lon, lat, rings, buffer_deg: float = 0.0) -> np.ndarray:
+    """True for points inside any ring. `buffer_deg` grows the rings a little
+    (the area API tail is clipped to the country like the yearly country files)."""
+    from matplotlib.path import Path as MplPath
+
+    pts = np.column_stack([np.asarray(lon, dtype="float64"), np.asarray(lat, dtype="float64")])
+    inside = np.zeros(len(pts), dtype=bool)
+    for ring in rings:
+        lo, hi = ring.min(axis=0) - buffer_deg, ring.max(axis=0) + buffer_deg
+        cand = ~inside & (pts[:, 0] >= lo[0]) & (pts[:, 0] <= hi[0]) & (pts[:, 1] >= lo[1]) & (pts[:, 1] <= hi[1])
+        if cand.any():
+            # positive radius grows a counter-clockwise ring, negative a clockwise one: test both
+            path = MplPath(ring)
+            hit = path.contains_points(pts[cand], radius=buffer_deg) | path.contains_points(pts[cand], radius=-buffer_deg)
+            inside[np.flatnonzero(cand)[hit]] = True
+    return inside
+
+
 # ----------------------------------------------------------------------- cleaning
 
 CLEAN_COLUMNS = [

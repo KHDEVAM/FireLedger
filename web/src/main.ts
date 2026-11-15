@@ -10,7 +10,7 @@ import { fetchExposure, fetchWeather } from './advisory/exposure';
 import { buildAdvisory, renderAdvisory, type AdvisoryDoc } from './advisory/panel';
 import { renderClock } from './calendar/clock';
 import { renderCalendarTable, renderHeatmap, renderLegend, signed, type ColorMode } from './calendar/heatmap';
-import { annualTable, renderAnnual, renderBox, renderSeason, renderTop, seasonTable, topTable } from './charts/charts';
+import { annualTable, renderAnnual, renderBox, renderCompare, renderSeason, renderTop, seasonTable, topTable } from './charts/charts';
 import { ageColors, countScale, rampColors, zeroColor } from './colors';
 import { aggregate, aoiAreaKm2, aoiBbox, aoiRing, cellTotals, decodeAoi, encodeAoi, loadRegion, parseBbox, selectCells, type Region } from './data';
 import { downloadBlob, hotspotsCsv, matrixCsv } from './export/csv';
@@ -20,7 +20,8 @@ import { FireMap } from './map/map';
 import { fetchNrt, simulatedNrt, type NrtResult } from './nrt';
 import { buildCalendar, classify, currentCell, summarize, type Summary } from './stats';
 import type { Aoi, CalCell, CalendarModel, Series } from './types';
-import { $, escapeHtml, setStatus } from './ui';
+import { $, escapeHtml, followTooltip, setStatus } from './ui';
+import { checkZone, loadZones, MAX_ZONES, saveZones, ZONE_WINDOW_H, zoneAoi, zonesJson, type Zone, type ZoneStatus } from './zones';
 
 const REGION = 'MAR';
 const params = new URLSearchParams(location.search);
@@ -56,6 +57,10 @@ let nrtAbort: AbortController | null = null;
 let context: { key: string; weather: Weather | null; exposure: Exposure | null } | null = null;
 let advisory: AdvisoryDoc | null = null;
 let timelapse: number | null = null;
+/** area A of the comparison */
+let pinned: { aoi: Aoi; name: string } | null = null;
+let zones: Zone[] = [];
+const zoneStatus = new Map<string, ZoneStatus>();
 
 const ymText = (ym: number) => `${Math.floor(ym / 100)}-${String(ym % 100).padStart(2, '0')}`;
 const ymParse = (text: string | null): number | null => {
@@ -64,8 +69,7 @@ const ymParse = (text: string | null): number | null => {
 };
 const series = (): Series => (state.modisOnly ? 'm' : state.includeStatic ? 'a' : 'h');
 
-function aoiName(): string {
-  const a = state.aoi;
+function aoiName(a: Aoi = state.aoi): string {
   const f = (v: number) => v.toFixed(2);
   if (a.kind === 'region') return t('aoi.name.region', { name: region.meta.name });
   if (a.kind === 'bbox') return t('aoi.name.bbox', { w: f(a.bbox[0]), s: f(a.bbox[1]), e: f(a.bbox[2]), n: f(a.bbox[3]) });
@@ -75,11 +79,19 @@ function aoiName(): string {
 
 /* ------------------------------------------------------------------ analytics */
 
-function recompute(): void {
-  const cells = selectCells(region.monthly, state.aoi);
+/** The month in progress at the end of the record, with the share of its days already observed. */
+function partialMonth(): { ym: number; fraction: number } | undefined {
+  const [y, m, d] = region.meta.data_end.split('-').map(Number);
+  const days = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return d < days ? { ym: y * 100 + m, fraction: d / days } : undefined;
+}
+
+/** Calendar model and summary of any area with the current date range and series. */
+function analyse(aoi: Aoi) {
+  const cells = selectCells(region.monthly, aoi);
   const values = aggregate(region.monthly, cells, series());
   const [y, m] = region.meta.harmonization.viirs_observed_from.split('-').map(Number);
-  model = buildCalendar({
+  const calendar = buildCalendar({
     years: region.meta.years,
     values,
     coverage: region.meta.coverage,
@@ -88,9 +100,17 @@ function recompute(): void {
     fromYm: state.fromYm,
     toYm: state.toYm,
     modisOnly: state.modisOnly,
+    partial: partialMonth(),
   });
-  summary = summarize(model);
-  focus = currentCell(model);
+  return { cells, model: calendar, summary: summarize(calendar), focus: currentCell(calendar) };
+}
+
+function recompute(): void {
+  const result = analyse(state.aoi);
+  const cells = result.cells;
+  model = result.model;
+  summary = result.summary;
+  focus = result.focus;
   // for the whole country the area is the sum of the grid cells that hold fire records
   const size = region.monthly.cell_size_deg;
   const cellKm2 = (i: number) => 111.32 ** 2 * size * size * Math.cos(((region.monthly.cells[i][1] + size / 2) * Math.PI) / 180);
@@ -104,7 +124,11 @@ function renderNow(): void {
   if (!focus) return;
   const { cell, isCurrentMonth } = focus;
   const month = monthName(cell.month, 'long');
-  $('now-month').textContent = t(isCurrentMonth ? 'now.current' : 'now.latest', { month, year: cell.year, end: region.meta.data_end });
+  const part = partialMonth();
+  const inProgress = part && part.ym === cell.ym;
+  $('now-month').textContent = inProgress
+    ? t('now.partial', { month, year: cell.year, end: region.meta.data_end, pct: Math.round(part.fraction * 100) })
+    : t(isCurrentMonth ? 'now.current' : 'now.latest', { month, year: cell.year, end: region.meta.data_end });
   $('now-value').textContent = fmt(cell.value ?? 0);
   $('now-median').textContent = cell.median === null ? '–' : fmt(cell.median);
   $('now-anomaly').textContent = cell.anomalyPct === null ? '–' : `${signed(cell.anomalyPct)} %`;
@@ -214,9 +238,111 @@ function update(): void {
   renderNow();
   renderCalendar();
   renderCharts();
+  renderComparison();
   renderMapData();
   renderLive();
   syncUrl();
+}
+
+/* ------------------------------------------------------------------ compare two areas */
+
+function renderComparison(): void {
+  const body = $('cmp-body');
+  $('cmp-clear').hidden = !pinned;
+  if (!pinned) return void (body.innerHTML = '');
+  if (encodeAoi(pinned.aoi) === encodeAoi(state.aoi)) return void (body.innerHTML = `<p class="banner info">${escapeHtml(t('cmp.same', { name: pinned.name }))}</p>`);
+  const a = analyse(pinned.aoi);
+  const b = { summary, focus };
+  const total = (s: Summary) => fmt(s.annual.reduce((sum, yr) => sum + yr.total, 0));
+  const typical = (s: Summary) => {
+    const full = s.annual.filter((yr) => yr.complete).map((yr) => yr.total).sort((p, q) => p - q);
+    return full.length ? fmt(full[Math.floor(full.length / 2)]) : '–';
+  };
+  const latest = (f: typeof focus) => (f && f.cell.anomalyPct !== null ? `${monthName(f.cell.month, 'short')} ${f.cell.year}: ${signed(f.cell.anomalyPct)} %` : '–');
+  const trend = (s: Summary) => (Number.isFinite(s.trendPerYear) ? `${signed(+s.trendPerYear.toFixed(1))} (p = ${s.trendP.toFixed(2)})` : '–');
+  const rows: [string, string, string][] = [
+    [t('cmp.total'), total(a.summary), total(b.summary)],
+    [t('cmp.annual'), typical(a.summary), typical(b.summary)],
+    [t('cmp.peak'), monthName(a.summary.peakMonth, 'long'), monthName(b.summary.peakMonth, 'long')],
+    [t('cmp.season'), String(a.summary.seasonLength), String(b.summary.seasonLength)],
+    [t('cmp.trend'), trend(a.summary), trend(b.summary)],
+    [t('cmp.latest'), latest(a.focus), latest(b.focus)],
+  ];
+  const nameA = pinned.name;
+  const nameB = aoiName();
+  body.innerHTML = `<div class="cmp-grid"><div class="table-wrap"><table><caption>${escapeHtml(t('unit.fcd'))}</caption><thead><tr><th scope="col">${escapeHtml(t('cmp.metric'))}</th><th scope="col">${escapeHtml(`${t('cmp.a')}: ${nameA}`)}</th><th scope="col">${escapeHtml(`${t('cmp.b')}: ${nameB}`)}</th></tr></thead><tbody>${rows
+    .map((r) => `<tr><th scope="row">${escapeHtml(r[0])}</th><td>${escapeHtml(r[1])}</td><td>${escapeHtml(r[2])}</td></tr>`)
+    .join('')}</tbody></table></div><figure class="chart-fig"><div id="cmp-chart" class="chart"></div></figure></div>`;
+  renderCompare($('cmp-chart'), a.summary, b.summary, nameA, nameB);
+}
+
+/* ------------------------------------------------------------------ watch zones */
+
+function renderZones(): void {
+  const list = $('wz-list');
+  list.innerHTML = zones.length ? '' : `<li class="hint">${escapeHtml(t('wz.empty'))}</li>`;
+  zones.forEach((zone, i) => {
+    const st = zoneStatus.get(zone.aoi + zone.name) ?? { state: 'unchecked' };
+    const text =
+      st.state === 'ok'
+        ? `${demo ? `[${t('adv.simulated.short')}] ` : ''}${t(st.count ? 'wz.count' : 'wz.none', { count: st.count, hours: ZONE_WINDOW_H })}`
+        : st.state === 'error'
+          ? t('wz.error', { reason: st.reason })
+          : t(st.state === 'checking' ? 'wz.checking' : 'wz.unchecked');
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="zone-name">${escapeHtml(zone.name)}</span><span class="zone-status${st.state === 'ok' && st.count ? ' alert' : ''}">${escapeHtml(text)}</span>
+      <button class="btn btn-quiet" type="button" data-zone="view">${escapeHtml(t('wz.view'))}</button>
+      <button class="btn btn-quiet" type="button" data-zone="remove" aria-label="${escapeHtml(`${t('wz.remove')}: ${zone.name}`)}">${escapeHtml(t('wz.remove'))}</button>`;
+    li.querySelector('[data-zone="view"]')!.addEventListener('click', () => setAoi(zoneAoi(zone)));
+    li.querySelector('[data-zone="remove"]')!.addEventListener('click', () => {
+      zones.splice(i, 1);
+      saveZones(zones);
+      renderZones();
+    });
+    list.appendChild(li);
+  });
+  ($('wz-check') as HTMLButtonElement).disabled = !zones.length;
+  ($('wz-export') as HTMLButtonElement).disabled = !zones.length;
+}
+
+async function checkZones(): Promise<void> {
+  for (const zone of zones) {
+    const key = zone.aoi + zone.name;
+    zoneStatus.set(key, { state: 'checking' });
+    renderZones();
+    try {
+      zoneStatus.set(key, { state: 'ok', count: await checkZone(zone, region.meta.bbox, demo) });
+    } catch (err) {
+      zoneStatus.set(key, { state: 'error', reason: (err as Error).message });
+    }
+    renderZones();
+  }
+}
+
+function setupExtras(): void {
+  $('cmp-pin').addEventListener('click', () => {
+    pinned = { aoi: state.aoi, name: aoiName() };
+    renderComparison();
+  });
+  $('cmp-clear').addEventListener('click', () => {
+    pinned = null;
+    renderComparison();
+  });
+
+  zones = loadZones();
+  $('wz-form').addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const input = $('wz-name') as HTMLInputElement;
+    if (zones.length >= MAX_ZONES) return void (input.placeholder = t('wz.full', { n: MAX_ZONES }));
+    zones.push({ name: input.value.trim() || t('wz.default', { n: zones.length + 1 }), aoi: encodeAoi(state.aoi) });
+    input.value = '';
+    saveZones(zones);
+    renderZones();
+  });
+  $('wz-check').addEventListener('click', () => void checkZones());
+  $('wz-export').addEventListener('click', () => downloadBlob(new Blob([zonesJson(zones, region.meta.bbox)], { type: 'application/json' }), 'zones.json'));
+  renderZones();
+  if (zones.length) void checkZones();
 }
 
 /* ------------------------------------------------------------------ live + advisory */
@@ -532,6 +658,7 @@ function refreshTexts(): void {
   stopTimelapse();
   fillAdmin();
   renderMethods();
+  renderZones();
   update();
 }
 
@@ -661,6 +788,7 @@ async function start(): Promise<void> {
   setupArea();
   setupControls();
   setupDownloads();
+  setupExtras();
   fillAdmin();
   renderMethods();
 
@@ -673,6 +801,9 @@ async function start(): Promise<void> {
     renderMapData();
     renderLive();
   });
+
+  // a tooltip opened from the keyboard follows its cell when the page scrolls
+  window.addEventListener('scroll', followTooltip, { passive: true, capture: true });
 
   if ('serviceWorker' in navigator && import.meta.env.PROD) void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`);
 }

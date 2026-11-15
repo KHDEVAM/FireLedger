@@ -22,7 +22,6 @@ Globals:
   Function:
     Runtime: python3.12
     Architectures: [arm64]
-    CodeUri: ../api/
     Timeout: 60
     MemorySize: 256
     Environment:
@@ -51,6 +50,7 @@ Resources:
   NrtFunction:
     Type: AWS::Serverless::Function
     Properties:
+      CodeUri: ../api/
       Handler: nrt.app.handler
       FunctionUrlConfig: { AuthType: NONE }
       LoggingConfig: { LogGroup: !Ref NrtLogs }
@@ -64,6 +64,7 @@ Resources:
   WeatherFunction:
     Type: AWS::Serverless::Function
     Properties:
+      CodeUri: ../api/
       Handler: weather.app.handler
       Timeout: 30
       FunctionUrlConfig: { AuthType: NONE }
@@ -74,6 +75,7 @@ Resources:
   ExportFunction:
     Type: AWS::Serverless::Function
     Properties:
+      CodeUri: ../api/
       Handler: export.app.handler
       Timeout: 120
       FunctionUrlConfig: { AuthType: NONE }
@@ -88,6 +90,7 @@ Resources:
   RefreshFunction:
     Type: AWS::Serverless::Function
     Properties:
+      CodeUri: ../api/
       Handler: refresh.app.handler
       Timeout: 180
       LoggingConfig: { LogGroup: !Ref RefreshLogs }

@@ -142,7 +142,8 @@ export class FireMap {
     this.draw = { mode, pts: [], done, cancel };
     this.map.doubleClickZoom.disable();
     this.map.getCanvas().style.cursor = 'crosshair';
-    this.map.getCanvas().focus();
+    // keyboard focus for Enter / Escape, without scrolling the page under the pointer
+    this.map.getCanvas().focus({ preventScroll: true });
   }
 
   cancelDraw(): void {

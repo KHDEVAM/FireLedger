@@ -16,14 +16,16 @@
   --fl-paper-2: #f7f8fa;
   --fl-signature: linear-gradient(90deg, #fd8500, #f61200 60%, #00112c);
 
-  /* sequential "fire ramp" for counts (lightness falls steadily) */
+  /* sequential "fire ramp" for counts. Lightness falls steadily; steps 2, 5 and 6 are slightly
+     shifted from the brand hexes so neighbours stay apart under deuteranopia
+     (checked by web/scripts/check_ramps.py) */
   --fl-ramp-0: #eef1f5;
   --fl-ramp-1: #fde7a6;
-  --fl-ramp-2: #fdb300;
+  --fl-ramp-2: #fdbb1a;
   --fl-ramp-3: #fd8500;
   --fl-ramp-4: #fd4c01;
-  --fl-ramp-5: #f61200;
-  --fl-ramp-6: #c60006;
+  --fl-ramp-5: #ea1100;
+  --fl-ramp-6: #b20005;
   --fl-ramp-7: #5a0a12;
 
   /* diverging anomaly ramp: blue (below) to fire (above), never red-green */

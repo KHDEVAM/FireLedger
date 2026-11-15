@@ -8,11 +8,12 @@ from __future__ import annotations
 
 import pandas as pd
 
-from lib import INTERIM, RAW, confidence_ok, dedupe_sp_nrt, load_config, unify_schema
+from lib import BOUNDARY_FILE, INTERIM, RAW, boundary_rings, confidence_ok, dedupe_sp_nrt, inside_rings, load_config, unify_schema
 
 
 def main() -> None:
     cfg = load_config()
+    rings = boundary_rings() if BOUNDARY_FILE.exists() else []
     frames = []
     for sensor, meta in cfg["sources"]["archive_sensors"].items():
         for path in sorted((RAW / sensor).glob("*.csv")):
@@ -20,7 +21,11 @@ def main() -> None:
     for source, meta in cfg["sources"]["tail_sources"].items():
         path = RAW / "tail" / f"{source}.csv"
         if path.exists():
-            frames.append(unify_schema(pd.read_csv(path, low_memory=False), meta["family"], meta["sat"], meta["proc"]))
+            tail = unify_schema(pd.read_csv(path, low_memory=False), meta["family"], meta["sat"], meta["proc"])
+            # the area API returns a rectangle; keep only the country, like the yearly country files
+            keep = inside_rings(tail["longitude"], tail["latitude"], rings, cfg["region"].get("clip_buffer_deg", 0.0))
+            print(f"tail {source}: {len(tail):,} rows in the bounding box, {int(keep.sum()):,} inside the region")
+            frames.append(tail[keep])
     if not frames:
         raise SystemExit("No raw files found. Run pipeline/01_download.py first.")
     df = pd.concat(frames, ignore_index=True)

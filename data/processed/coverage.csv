@@ -299,3 +299,15 @@ year,month,status,note
 2025,10,ok,
 2025,11,ok,
 2025,12,ok,
+2026,1,ok,
+2026,2,ok,
+2026,3,ok,
+2026,4,ok,
+2026,5,ok,
+2026,6,ok,
+2026,7,ok,
+2026,8,ok,
+2026,9,ok,
+2026,10,ok,
+2026,11,partial,month only partly covered by the record
+2026,12,nodata,outside the data record

@@ -7,6 +7,7 @@ import en from '../src/i18n/en';
 import fr from '../src/i18n/fr';
 import { buildCalendar, classify, currentCell, mannKendallP, median, seasonLength, summarize, theilSen } from '../src/stats';
 import type { Aoi, Hotspot, Monthly } from '../src/types';
+import { zoneAoi, zonesJson } from '../src/zones';
 
 /** 2 x 2 grid of 0.25 degree cells around (35, -5); values are easy to sum by hand. */
 function fixture(): Monthly {
@@ -96,11 +97,26 @@ describe('aggregation and calendar', () => {
     expect(s.annual.every((a) => a.complete)).toBe(true);
   });
 
+  it('compares a month in progress with the same share of a typical month', () => {
+    const values = aggregate(m, [0, 1, 2, 3], 'h');
+    values.set(202508, { v: 23, lo: 23, hi: 23 }); // half of August observed: 23 of a typical 46
+    const input = { years, values, coverage: [], baseline: [2003, 2022] as [number, number], observedFrom: 201202, fromYm: 200101, toYm: 202512 };
+    const naive = buildCalendar(input).cells[24][7];
+    const fair = buildCalendar({ ...input, partial: { ym: 202508, fraction: 0.5 } }).cells[24][7];
+    expect(naive.anomalyPct).toBeCloseTo(-50, 6);
+    expect(fair.median).toBe(23);
+    expect(fair.anomalyPct).toBeCloseTo(0, 6);
+    expect(classify(fair.anomalyPct)).toBe('normal');
+    // other months and years are untouched
+    expect(buildCalendar({ ...input, partial: { ym: 202508, fraction: 0.5 } }).cells[23][7].median).toBe(46);
+  });
+
   it('falls back to the latest month with data when the current month has none', () => {
     const model = calendar(aggregate(m, [0, 1, 2, 3], 'h'));
     const focus = currentCell(model, new Date(Date.UTC(2026, 10, 14)))!;
     expect(focus.isCurrentMonth).toBe(false);
     expect(focus.cell.ym).toBe(202512);
+    expect(currentCell(model, new Date(Date.UTC(2025, 10, 14)))!.cell.ym).toBe(202511);
     expect(currentCell(model, new Date(Date.UTC(2024, 7, 2)))!.isCurrentMonth).toBe(true);
   });
 
@@ -192,6 +208,21 @@ describe('advisory engine', () => {
     const a = assess(pts, null, null, ctx);
     expect(Object.keys(resourcesFor(a))).toContain('crews');
     expect(resourcesFor(assess([], null, null, ctx))).toEqual({});
+  });
+});
+
+describe('watch zones', () => {
+  it('exports the format the scheduled alert function reads', () => {
+    const zones = [{ name: 'Rif', aoi: 'circle:35.17,-5.27,25' }, { name: 'Box', aoi: 'bbox:-6,34.8,-4.5,35.6' }];
+    const rows = JSON.parse(zonesJson(zones, [-17, 21, -1, 36]));
+    expect(rows).toHaveLength(2);
+    expect(Object.keys(rows[0])).toEqual(['name', 'bbox', 'email', 'min_hotspots']);
+    expect(rows[1].bbox).toEqual([-6, 34.8, -4.5, 35.6]);
+    const [w, s, e, n] = rows[0].bbox;
+    expect(w).toBeLessThan(-5.27);
+    expect(e).toBeGreaterThan(-5.27);
+    expect(n - s).toBeCloseTo((2 * 25) / 111.32, 2);
+    expect(zoneAoi({ name: 'broken', aoi: 'nonsense' })).toEqual({ kind: 'region' });
   });
 });
 

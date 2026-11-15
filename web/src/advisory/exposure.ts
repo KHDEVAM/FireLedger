@@ -6,7 +6,33 @@
 import { haversineKm } from '../data';
 import { advisoryConfig, bearingDeg, type Exposure, type Place, type Weather } from './engine';
 
-const OVERPASS = 'https://overpass-api.de/api/interpreter';
+/** Public Overpass instances, tried in order (they are volunteer-run and sometimes busy). */
+const OVERPASS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+];
+const OVERPASS_TIMEOUT_MS = 14000;
+
+async function overpass(query: string, signal?: AbortSignal): Promise<{ elements: OsmElement[] }> {
+  let last: unknown = new Error('Overpass not reachable');
+  for (const url of OVERPASS) {
+    const timer = new AbortController();
+    const stop = setTimeout(() => timer.abort(), OVERPASS_TIMEOUT_MS);
+    signal?.addEventListener('abort', () => timer.abort(), { once: true });
+    try {
+      const res = await fetch(url, { method: 'POST', body: `data=${encodeURIComponent(query)}`, headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, signal: timer.signal });
+      if (res.ok) return (await res.json()) as { elements: OsmElement[] };
+      last = new Error(`Overpass HTTP ${res.status}`);
+    } catch (err) {
+      last = err;
+      if (signal?.aborted) break;
+    } finally {
+      clearTimeout(stop);
+    }
+  }
+  throw last;
+}
 
 interface OsmElement {
   type: string;
@@ -20,7 +46,7 @@ export async function fetchExposure(lat: number, lon: number, signal?: AbortSign
   const r = advisoryConfig.exposureRadiusM;
   const near = `(around:${r},${lat.toFixed(4)},${lon.toFixed(4)})`;
   const mid = `(around:${Math.round(r * 0.6)},${lat.toFixed(4)},${lon.toFixed(4)})`;
-  const query = `[out:json][timeout:25];(
+  const query = `[out:json][timeout:12];(
     node[place~"^(city|town|village|hamlet)$"]${near};
     nwr[amenity~"^(hospital|fire_station|school)$"]${mid};
     nwr[natural=water][name]${mid};
@@ -30,9 +56,7 @@ export async function fetchExposure(lat: number, lon: number, signal?: AbortSign
     nwr[leisure~"^(pitch|stadium|sports_centre)$"]${mid};
     nwr[amenity=parking][name]${mid};
   );out center 600;`;
-  const res = await fetch(OVERPASS, { method: 'POST', body: `data=${encodeURIComponent(query)}`, headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, signal });
-  if (!res.ok) throw new Error(`Overpass HTTP ${res.status}`);
-  const json = (await res.json()) as { elements: OsmElement[] };
+  const json = await overpass(query, signal);
 
   const out: Exposure = { settlements: [], hospitals: [], fireStations: [], schools: [], water: [], staging: [] };
   for (const el of json.elements) {

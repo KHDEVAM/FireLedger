@@ -55,4 +55,11 @@ class Handler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     port = int(os.environ.get("API_PORT", "8787"))
     print(f"FireLedger API on http://127.0.0.1:{port}  (FIRMS key {'set' if os.environ.get('FIRMS_MAP_KEY') else 'NOT set'})")
-    ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
+    # On Windows, address reuse would let a second copy share the port silently and an
+    # old copy (with old settings) keep answering. Fail loudly instead.
+    ThreadingHTTPServer.allow_reuse_address = False
+    try:
+        server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    except OSError:
+        sys.exit(f"Port {port} is already in use: another copy of the API is running. Stop it first.")
+    server.serve_forever()
