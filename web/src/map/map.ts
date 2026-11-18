@@ -8,6 +8,33 @@ const BASEMAP_STYLE = 'https://tiles.openfreemap.org/styles/positron';
 /** NASA GIBS true-color imagery (VIIRS NOAA-20 corrected reflectance) - see SOURCES.md */
 const gibsTiles = (date: string) =>
   `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/${date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`;
+const dayIso = (daysBack: number) => new Date(Date.now() - daysBack * 864e5).toISOString().slice(0, 10);
+
+/**
+ * Share of near-black pixels in the zoom-4 GIBS tile around a point. A day's mosaic is
+ * filled in pass by pass, so the most recent day is often still black where no
+ * processed overpass exists yet.
+ */
+async function blackShare(date: string, lon: number, lat: number): Promise<number> {
+  const z = 4;
+  const n = 2 ** z;
+  const x = Math.floor(((lon + 180) / 360) * n);
+  const r = (lat * Math.PI) / 180;
+  const y = Math.floor(((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2) * n);
+  const url = gibsTiles(date).replace('{z}', String(z)).replace('{y}', String(y)).replace('{x}', String(x));
+  const res = await fetch(url);
+  if (!res.ok) return 1;
+  const img = await createImageBitmap(await res.blob());
+  const c = document.createElement('canvas');
+  c.width = 64;
+  c.height = 64;
+  const g = c.getContext('2d', { willReadFrequently: true })!;
+  g.drawImage(img, 0, 0, 64, 64);
+  const px = g.getImageData(0, 0, 64, 64).data;
+  let dark = 0;
+  for (let i = 0; i < px.length; i += 4) if (Math.max(px[i], px[i + 1], px[i + 2]) < 12) dark++;
+  return dark / (px.length / 4);
+}
 
 type Ring = [number, number][];
 type DrawMode = 'rect' | 'poly';
@@ -22,6 +49,8 @@ export class FireMap {
   readonly map: MlMap;
   readonly ready: Promise<void>;
   private draw: { mode: DrawMode; pts: Ring; done: (ring: Ring) => void; cancel: () => void } | null = null;
+  /** date of the GIBS mosaic in use, and the view it was chosen for */
+  private imagery: { date: string; key: string } | null = null;
 
   constructor(el: HTMLElement, bbox: [number, number, number, number]) {
     this.map = new maplibregl.Map({
@@ -40,10 +69,9 @@ export class FireMap {
 
   private setup(): void {
     const m = this.map;
-    const yesterday = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
     m.addSource('gibs', {
       type: 'raster',
-      tiles: [gibsTiles(yesterday)],
+      tiles: [gibsTiles(dayIso(2))],
       tileSize: 256,
       maxzoom: 9,
       attribution: 'Imagery: NASA GIBS / EOSDIS',
@@ -123,8 +151,34 @@ export class FireMap {
     this.src('wind').setData(line ? { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: line } } : empty());
   }
 
-  setVisible(layer: 'density' | 'nrt' | 'gibs', on: boolean): void {
-    this.map.setLayoutProperty(layer, 'visibility', on ? 'visible' : 'none');
+  setVisible(layer: 'density' | 'nrt' | 'gibs' | 'wind', on: boolean): void {
+    // a box ticked before the basemap has loaded applies once the layers exist
+    void this.ready.then(() => this.map.setLayoutProperty(layer, 'visibility', on ? 'visible' : 'none'));
+  }
+
+  /**
+   * Point the imagery layer at the most recent day whose mosaic is (mostly) filled over
+   * the current view, and return that date. Falls back to two days ago if NASA is unreachable.
+   */
+  async chooseImageryDate(): Promise<string> {
+    await this.ready;
+    const c = this.map.getCenter();
+    const key = `${Math.round(c.lng / 10)},${Math.round(c.lat / 10)}`;
+    if (this.imagery?.key === key) return this.imagery.date;
+    let date = dayIso(2);
+    for (let back = 1; back <= 5; back++) {
+      try {
+        if ((await blackShare(dayIso(back), c.lng, c.lat)) < 0.1) {
+          date = dayIso(back);
+          break;
+        }
+      } catch {
+        break;
+      }
+    }
+    if (this.imagery?.date !== date) (this.map.getSource('gibs') as maplibregl.RasterTileSource).setTiles([gibsTiles(date)]);
+    this.imagery = { date, key };
+    return date;
   }
 
   fit(bbox: [number, number, number, number]): void {

@@ -594,7 +594,15 @@ function setupControls(): void {
     const box = $(`layer-${layer}`) as HTMLInputElement;
     box.addEventListener('change', () => {
       map.setVisible(layer, box.checked);
-      if (layer === 'nrt') map.map.setLayoutProperty('wind', 'visibility', box.checked ? 'visible' : 'none');
+      if (layer === 'gibs') {
+        const label = $('gibs-date');
+        label.textContent = '';
+        if (box.checked)
+          void map.chooseImageryDate().then((d) => {
+            if (box.checked) label.textContent = ` (${new Date(d + 'T12:00:00Z').toLocaleDateString(document.documentElement.lang || 'en', { day: 'numeric', month: 'short', year: 'numeric' })})`;
+          });
+      }
+      if (layer === 'nrt') map.setVisible('wind', box.checked);
     });
   });
 

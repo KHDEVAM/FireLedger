@@ -64,7 +64,7 @@ await send('Page.navigate', { url });
 // wait for the app and the basemap
 for (let i = 0; i < 90; i++) {
   await sleep(1000);
-  if (await ev("!!document.querySelector('#calendar svg') && !!document.querySelector('#map canvas') && document.querySelectorAll('#admin option').length > 1")) break;
+  if (await ev("!!document.querySelector('#calendar svg') && /OpenStreetMap/.test(document.querySelector('#map .maplibregl-ctrl-attrib')?.textContent ?? '') && document.querySelectorAll('#admin option').length > 1")) break;
 }
 await sleep(6000);
 check('app loaded', await ev("!!document.querySelector('#calendar svg')"), await summary());
